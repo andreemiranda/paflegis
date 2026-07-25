@@ -1,0 +1,32 @@
+# ── Cloudflare Pages - Paflegis ────────────────────────────────────────────────
+# Para Cloudflare PAGES (recomendado - hospeda o frontend estático):
+#   wrangler pages deploy dist --project-name=paflegis
+#
+# Para Cloudflare WORKERS (SSR completo via adapter):
+#   Adapte o entry point para um Worker handler.
+#
+# Documentação: https://developers.cloudflare.com/pages/
+
+name = "paflegis"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages project
+pages_build_output_dir = "dist"
+
+# ── Build (usado pelo wrangler pages deploy) ────────────────────────────────────
+[build]
+command = "npm run build"
+
+# ── Dev local ──────────────────────────────────────────────────────────────────
+[dev]
+port = 5000
+local_protocol = "http"
+
+# ── Variáveis de ambiente ─────────────────────────────────────────────────────
+# Defina GEMINI_API_KEY e SESSION_SECRET pelo painel do Cloudflare ou via:
+#   wrangler secret put GEMINI_API_KEY
+#   wrangler secret put SESSION_SECRET
+
+[vars]
+NODE_ENV = "production"
