@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+
+# Build
+build/
+dist/
+
+# Testes
+coverage/
+
+# Sistema
+.DS_Store
+*.log
+
+# Variaveis de ambiente (nunca versionar!)
+.env*
+!.env.example
+
+# Cache
+.cache/
+
+# Artefatos de ambiente de desenvolvimento (nao pertencem ao repositorio)
+attached_assets/
+assets/
+zipFile.zip
+.agents/
+.config/
+
+# Lockfiles de outros gerenciadores — este projeto usa exclusivamente npm
+# Nao adicione bun.lock, yarn.lock, pnpm-lock.yaml
+bun.lock
+yarn.lock
+pnpm-lock.yaml
