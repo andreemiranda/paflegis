@@ -2,7 +2,7 @@
 
 Aplicativo civico independente de consulta as informacoes legislativas publicas do Municipio de Pedro Afonso - TO. Exibe materias legislativas, normas juridicas e sessoes plenarias obtidas via API publica do SAPL (Sistema de Apoio ao Processo Legislativo).
 
-> **Atencao:** o Paflegis nao e o portal oficial da Camara Municipal de Pedro Afonso - TO nem de qualquer orgao governamental. E uma ferramenta civica independente, sem vinculo institucional com o Poder Publico, fundamentada na Lei de Acesso a Informacao (Lei n. 12.527/2011).
+> **Atencao:** o Paflegis nao e o portal oficial de Pedro Afonso - TO nem de qualquer orgao governamental. E uma ferramenta civica independente, sem vinculo institucional com o Poder Publico, fundamentada na Lei de Acesso a Informacao (Lei n. 12.527/2011).
 
 ---
 
