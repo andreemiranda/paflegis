@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /api/v1/
-
-Sitemap: https://paflegis.com/sitemap.xml
