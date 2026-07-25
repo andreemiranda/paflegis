@@ -1,0 +1,27 @@
+# Cloudflare Pages — Paflegis
+# Documentação: https://developers.cloudflare.com/pages/
+#
+# Deploy via CLI:
+#   npx wrangler pages deploy dist --project-name=paflegis
+#
+# Deploy via painel (recomendado):
+#   Build command:    npm run build:static
+#   Output directory: dist
+#   Node version:     20
+#
+# Variáveis de ambiente: configure no painel do Cloudflare Pages
+#   → Settings → Environment Variables → Production
+#     GEMINI_API_KEY   = <sua chave>
+#     SESSION_SECRET   = <segredo aleatório>
+
+name = "paflegis"
+pages_build_output_dir = "./dist"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 5000
+local_protocol = "http"
+
+[vars]
+NODE_ENV = "production"
