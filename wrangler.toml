@@ -1,0 +1,26 @@
+# Cloudflare Pages — Paflegis
+#
+# Deploy command (painel CF Pages ou CI):
+#   npx wrangler pages deploy dist
+#
+# A pasta functions/ na raiz do projeto é detectada automaticamente
+# pelo Wrangler como Pages Functions (functions/api/[[path]].ts).
+#
+# Variáveis de ambiente: configure no painel Cloudflare
+#   Workers & Pages → paflegis → Settings → Environment Variables:
+#     GEMINI_API_KEY   = <sua chave>
+#     SESSION_SECRET   = <segredo aleatório>
+
+name = "paflegis"
+pages_build_output_dir = "./dist"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[pages_build_settings]
+# CF Pages sempre executa "npm clean-install" antes e pode falhar com o bug
+# "Exit handler never called" do npm 10.9.x. O build command inclui "npm install"
+# explícito: mesmo que o clean-install falhe, o build step garante as deps instaladas.
+build_command = "npm install --include=dev && npm run build:static"
+
+[vars]
+NODE_ENV = "production"
