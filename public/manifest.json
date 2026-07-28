@@ -1,7 +1,7 @@
 {
-  "name": "Paflegis - Consulta Pública Legislativa",
+  "name": "Paflegis - Transparência Legislativa",
   "short_name": "Paflegis",
-  "description": "Portal independente de consulta às informações legislativas do município de Pedro Afonso - TO. Matérias, Normas e Sessões Plenárias.",
+  "description": "Portal independente de consulta às informações legislativas da Câmara Municipal de Pedro Afonso - TO. Matérias, Normas e Sessões Plenárias.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

@@ -15,7 +15,7 @@ window.onload = function() {
       "version": "1.0.0",
       "description": "API pública otimizada e normalizada do Paflegis, agregando dados de Matérias Legislativas, Normas Jurídicas e Sessões Plenárias de Pedro Afonso - TO. Fonte original oficial: SAPL Pedro Afonso-TO.",
       "contact": {
-        "name": "Paflegis - Consulta Pública Legislativa",
+        "name": "Paflegis - Transparência Legislativa",
         "url": "https://sapl.pedroafonso.to.leg.br"
       }
     },
@@ -185,6 +185,8 @@ window.onload = function() {
   var spec1 = options.swaggerDoc
   var swaggerOptions = {
     spec: spec1,
+    url: url,
+    urls: urls,
     dom_id: '#swagger-ui',
     deepLinking: true,
     presets: [
