@@ -8,7 +8,6 @@ import {
 } from '../../types';
 import { normalizeDocumentUrl } from '../urlUtils';
 import { formatDateBR } from '../dateUtils';
-import { paflegisFetch } from './client';
 
 // ── Cache em memória (5 min TTL) ────────────────────────────────────────────
 const cache = new Map<string, { data: unknown; timestamp: number }>();
@@ -45,7 +44,7 @@ export async function getTiposMaterias(): Promise<TipoFiltro[]> {
   try {
     const cached = getFromCache<TipoFiltro[]>('tipos_materias');
     if (cached) return cached;
-    const res = await paflegisFetch('/api/v1/tipos/materias');
+    const res = await fetch('/api/v1/tipos/materias');
     if (res.ok) {
       const raw = await res.json();
       const data: TipoFiltro[] = (Array.isArray(raw) ? raw : [])
@@ -65,7 +64,7 @@ export async function getTiposNormas(): Promise<TipoFiltro[]> {
   try {
     const cached = getFromCache<TipoFiltro[]>('tipos_normas');
     if (cached) return cached;
-    const res = await paflegisFetch('/api/v1/tipos/normas');
+    const res = await fetch('/api/v1/tipos/normas');
     if (res.ok) {
       const raw = await res.json();
       const data: TipoFiltro[] = (Array.isArray(raw) ? raw : [])
@@ -95,7 +94,7 @@ export async function getMaterias(
   params.set('pagina', page.toString());
   params.set('limite', limit.toString());
 
-  const res = await paflegisFetch(`/api/v1/materias?${params.toString()}`);
+  const res = await fetch(`/api/v1/materias?${params.toString()}`);
   if (!res.ok) throw new Error(`SAPL indisponível para matérias (HTTP ${res.status})`);
   const data = await res.json();
   if (data && Array.isArray(data.items)) {
@@ -119,7 +118,7 @@ export async function getMaterias(
 
 export async function getMateriaById(id: number | string): Promise<MateriaLegislativa | null> {
   try {
-    const res = await paflegisFetch(`/api/v1/materias/${id}`);
+    const res = await fetch(`/api/v1/materias/${id}`);
     if (res.ok) {
       const data = await res.json();
       return {
@@ -151,7 +150,7 @@ export async function getNormas(
   params.set('pagina', page.toString());
   params.set('limite', limit.toString());
 
-  const res = await paflegisFetch(`/api/v1/normas?${params.toString()}`);
+  const res = await fetch(`/api/v1/normas?${params.toString()}`);
   if (!res.ok) throw new Error(`SAPL indisponível para normas (HTTP ${res.status})`);
   const data = await res.json();
   if (data && Array.isArray(data.items)) {
@@ -175,7 +174,7 @@ export async function getNormas(
 
 export async function getNormaById(id: number | string): Promise<NormaJuridica | null> {
   try {
-    const res = await paflegisFetch(`/api/v1/normas/${id}`);
+    const res = await fetch(`/api/v1/normas/${id}`);
     if (res.ok) {
       const data = await res.json();
       return {
@@ -206,7 +205,7 @@ export async function getSessoes(
   params.set('pagina', page.toString());
   params.set('limite', limit.toString());
 
-  const res = await paflegisFetch(`/api/v1/sessoes?${params.toString()}`);
+  const res = await fetch(`/api/v1/sessoes?${params.toString()}`);
   if (!res.ok) throw new Error(`SAPL indisponível para sessões (HTTP ${res.status})`);
   const data = await res.json();
   if (data && Array.isArray(data.items)) {
@@ -231,7 +230,7 @@ export async function getSessoes(
 
 export async function getSessaoById(id: number | string): Promise<SessaoPlenaria | null> {
   try {
-    const res = await paflegisFetch(`/api/v1/sessoes/${id}`);
+    const res = await fetch(`/api/v1/sessoes/${id}`);
     if (res.ok) {
       const data = await res.json();
       return {
@@ -252,11 +251,10 @@ export async function getSessaoById(id: number | string): Promise<SessaoPlenaria
 
 // ── Estatísticas ─────────────────────────────────────────────────────────────
 export async function getEstatisticas(): Promise<EstatisticasLegislativas> {
-  const res = await paflegisFetch('/api/v1/estatisticas');
+  const res = await fetch('/api/v1/estatisticas');
   if (!res.ok) throw new Error(`SAPL indisponível para estatísticas (HTTP ${res.status})`);
   return await res.json();
 }
 
 // Exporta formatDateBR para reuso em views que precisem formatar datas vindas da API
 export { formatDateBR };
-

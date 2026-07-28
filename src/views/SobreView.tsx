@@ -29,7 +29,7 @@ export const SobreView: React.FC = () => {
             Com interface leve, acessível e otimizada, o Paflegis consolida dados públicos abertos de <strong>Matérias Legislativas</strong>, <strong>Normas Jurídicas</strong> e <strong>Sessões Plenárias</strong> em um único ambiente de consulta intuitivo.
           </p>
           <p className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-xs">
-            <strong>Natureza do Aplicativo:</strong> Esta ferramenta não constitui o portal oficial do governo nem do órgão legislativo. Trata-se de uma aplicação privada/cívica desenvolvida por Paflegis com o intuito de facilitar a pesquisa pública e apoiar o trabalho de transparência pública, amparada pela Lei de Acesso à Informação (Lei 12.527/2011).
+            <strong>Natureza do Aplicativo:</strong> Esta ferramenta não constitui o portal oficial do governo nem do órgão legislativo. Trata-se de uma aplicação privada/cívica desenvolvida por Paflegis com o intuito de facilitar a pesquisa e a transparência pública, amparada pela Lei de Acesso à Informação (Lei 12.527/2011).
           </p>
         </div>
 

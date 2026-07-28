@@ -40,70 +40,70 @@ export const AccessibilityBar: React.FC<AccessibilityBarProps> = ({
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-40 bg-slate-950 border-b border-slate-800/80 text-slate-300 py-1.5 px-3 sm:px-4 text-xs flex flex-wrap justify-between items-center gap-2 select-none shadow-md">
-      <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-        <span className="font-bold text-slate-400 uppercase text-xs tracking-wider hidden sm:inline">
+    <div className="bg-slate-950 border-b border-slate-800/80 text-slate-400 py-1 px-4 text-xs flex flex-wrap justify-between items-center gap-2 select-none">
+      <div className="flex items-center gap-3">
+        <span className="font-bold text-slate-500 uppercase text-[10px] tracking-wider hidden sm:inline">
           Acessibilidade:
         </span>
         <button
           onClick={toggleHighContrast}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors text-xs font-semibold cursor-pointer min-h-[34px] ${
+          className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors text-[11px] font-semibold ${
             highContrast
               ? 'bg-amber-400 text-slate-950 font-bold'
-              : 'bg-slate-800 text-slate-200 hover:text-white border border-slate-700'
+              : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
           }`}
           title="Alternar Alto Contraste"
           aria-label="Alternar Alto Contraste"
         >
-          <Eye className="w-3.5 h-3.5 text-blue-400" />
+          <Eye className="w-3 h-3 text-blue-400" />
           <span>Alto Contraste</span>
         </button>
 
-        <div className="flex items-center bg-slate-800 border border-slate-700 rounded-md overflow-hidden text-xs">
+        <div className="flex items-center bg-slate-800 border border-slate-700 rounded overflow-hidden text-[11px]">
           <button
             onClick={decreaseFont}
-            className="px-2.5 py-1 hover:bg-slate-700 transition-colors border-r border-slate-700 text-slate-200 font-medium cursor-pointer min-h-[34px]"
+            className="px-2 py-0.5 hover:bg-slate-700 transition-colors border-r border-slate-700 text-slate-300 font-medium"
             title="Diminuir fonte (A-)"
             aria-label="Diminuir tamanho da fonte"
           >
-            <span className="flex items-center gap-1"><ZoomOut className="w-3.5 h-3.5 text-slate-300" /> A-</span>
+            <span className="flex items-center gap-1"><ZoomOut className="w-3 h-3 text-slate-400" /> A-</span>
           </button>
           <button
             onClick={resetFont}
-            className="px-2.5 py-1 hover:bg-slate-700 transition-colors border-r border-slate-700 text-slate-200 font-medium cursor-pointer min-h-[34px]"
+            className="px-2 py-0.5 hover:bg-slate-700 transition-colors border-r border-slate-700 text-slate-300 font-medium"
             title="Tamanho normal (A)"
             aria-label="Redefinir tamanho da fonte"
           >
-            <span className="flex items-center gap-1"><RotateCcw className="w-3.5 h-3.5 text-slate-300" /> A</span>
+            <span className="flex items-center gap-1"><RotateCcw className="w-3 h-3 text-slate-400" /> A</span>
           </button>
           <button
             onClick={increaseFont}
-            className="px-2.5 py-1 hover:bg-slate-700 transition-colors text-slate-200 font-medium cursor-pointer min-h-[34px]"
+            className="px-2 py-0.5 hover:bg-slate-700 transition-colors text-slate-300 font-medium"
             title="Aumentar fonte (A+)"
             aria-label="Aumentar tamanho da fonte"
           >
-            <span className="flex items-center gap-1"><ZoomIn className="w-3.5 h-3.5 text-slate-300" /> A+</span>
+            <span className="flex items-center gap-1"><ZoomIn className="w-3 h-3 text-slate-400" /> A+</span>
           </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-xs">
+      <div className="flex items-center gap-3 text-[11px]">
         <button
           onClick={onOpenAccessibilityModal}
-          className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors font-medium cursor-pointer min-h-[34px] py-1"
+          className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors font-medium"
         >
-          <HelpCircle className="w-4 h-4 text-blue-400" />
+          <HelpCircle className="w-3.5 h-3.5 text-blue-400" />
           <span className="hidden sm:inline">Recursos de Acessibilidade</span>
           <span className="sm:hidden">Acessibilidade</span>
         </button>
 
-        <span className="text-slate-700">|</span>
+        <span className="text-slate-800">|</span>
 
         <button
           onClick={onOpenSitemapModal}
-          className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors font-medium cursor-pointer min-h-[34px] py-1"
+          className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors font-medium"
         >
-          <Map className="w-4 h-4 text-blue-400" />
+          <Map className="w-3.5 h-3.5 text-blue-400" />
           <span>Mapa do Site</span>
         </button>
       </div>

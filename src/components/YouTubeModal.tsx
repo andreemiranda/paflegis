@@ -1,12 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState } from 'react';
 import { X, Youtube, ExternalLink, Calendar, FileText, Copy, Check } from 'lucide-react';
 import { SessaoPlenaria } from '../types';
-import { copyToClipboard, getYouTubeVideoId, getYouTubeWatchUrl } from '../lib/urlUtils';
+import { copyToClipboard } from '../lib/urlUtils';
 import { formatDateBR } from '../lib/dateUtils';
-
-// Re-exporta para manter compatibilidade com importações existentes
-export { getYouTubeVideoId };
 
 interface YouTubeModalProps {
   isOpen: boolean;
@@ -14,6 +10,37 @@ interface YouTubeModalProps {
   sessao?: SessaoPlenaria | null;
   videoUrl?: string;
   title?: string;
+}
+
+// Extrai o ID do vídeo do YouTube a partir de qualquer formato de URL
+export function getYouTubeVideoId(url?: string): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+
+  // Se já for um ID de 11 caracteres
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Se contiver ?v= ou &v=
+  const vParamMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (vParamMatch && vParamMatch[1]) {
+    return vParamMatch[1];
+  }
+
+  // Regex para paths: youtu.be/ID, embed/ID, v/ID, live/ID, shorts/ID
+  const pathMatch = trimmed.match(/(?:youtu\.be\/|embed\/|v\/|live\/|shorts\/)([a-zA-Z0-9_-]{11})/);
+  if (pathMatch && pathMatch[1]) {
+    return pathMatch[1];
+  }
+
+  // Caso genérico de match de 11 caracteres no segmento final da URL
+  const lastSegment = trimmed.split('/').pop()?.split('?')[0]?.split('&')[0];
+  if (lastSegment && /^[a-zA-Z0-9_-]{11}$/.test(lastSegment)) {
+    return lastSegment;
+  }
+
+  return null;
 }
 
 export const YouTubeModal: React.FC<YouTubeModalProps> = ({
@@ -25,57 +52,19 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
-  // Bloqueia a rolagem do body e html enquanto o modal estiver aberto e restaura ao fechar
-  useEffect(() => {
-    if (isOpen) {
-      const originalBodyOverflow = document.body.style.overflow;
-      const originalHtmlOverflow = document.documentElement.style.overflow;
-
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-
-      return () => {
-        document.body.style.overflow = originalBodyOverflow;
-        document.documentElement.style.overflow = originalHtmlOverflow;
-      };
-    }
-  }, [isOpen]);
-
-  // Suporte a fechamento com a tecla ESC
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   if (!isOpen) return null;
 
   const rawUrl =
     videoUrl?.trim() ||
     sessao?.youtube_url?.trim() ||
-    sessao?.anexos?.find(
-      a =>
-        a.url &&
-        (a.url.includes('youtube') ||
-          a.url.includes('youtu.be') ||
-          a.url.includes('facebook') ||
-          a.tipo?.toLowerCase().includes('vídeo'))
-    )?.url?.trim() ||
+    sessao?.anexos?.find(a => a.url && (a.url.includes('youtube') || a.url.includes('youtu.be') || a.url.includes('facebook') || a.tipo?.includes('Vídeo')))?.url?.trim() ||
     '';
 
   const videoId = getYouTubeVideoId(rawUrl);
   const isYouTube = Boolean(videoId);
-  const isFacebook = rawUrl.toLowerCase().includes('facebook');
-
-  const embedUrl = videoId
-    ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1`
-    : '';
-
-  const watchUrl = getYouTubeWatchUrl(rawUrl) || (isYouTube ? `https://www.youtube.com/watch?v=${videoId}` : rawUrl);
+  const isFacebook = rawUrl.includes('facebook');
+  const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1` : '';
+  const watchUrl = isYouTube ? `https://www.youtube.com/watch?v=${videoId}` : rawUrl;
 
   const displayTitle =
     title ||
@@ -90,28 +79,9 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
     }
   };
 
-  const modalContent = (
-    <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-sm overflow-y-auto max-w-full overflow-x-hidden"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        height: '100dvh',
-      }}
-      onClick={onClose}
-    >
-      {/* Card do Modal — Centralizado estritamente na Viewport visível */}
-      <div
-        className="relative z-10 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col my-auto transition-all duration-200"
-        style={{
-          maxHeight: 'min(92dvh, calc(100dvh - 2rem))',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-2 sm:pt-4 px-2 sm:px-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in overflow-hidden">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100dvh - 1rem)' }}>
         {/* Header Bar */}
         <div className="shrink-0 px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-3 text-white">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -141,7 +111,7 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
             {watchUrl && (
               <button
                 onClick={handleCopyLink}
-                className="hidden sm:flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors cursor-pointer"
+                className="hidden sm:flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors"
                 title="Copiar link do vídeo"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -151,7 +121,7 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               title="Fechar Transmissão"
             >
               <X className="w-5 h-5" />
@@ -159,17 +129,18 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
           </div>
         </div>
 
-        {/* Video Player Area - Garante dimensões visíveis com aspect-video real */}
-        <div className="relative w-full bg-black aspect-video max-h-[58dvh] sm:max-h-[62dvh] flex items-center justify-center overflow-hidden shrink-0">
+        {/* Video Player Area — flex-1 + min-h-0 permite encolher livremente em landscape;
+            sem aspect-ratio fixo: o iframe preenche o espaço que sobra entre header e footer */}
+        <div className="relative w-full bg-black flex-1 min-h-0 overflow-hidden flex items-center justify-center">
           {isYouTube ? (
             <iframe
               src={embedUrl}
               title={displayTitle}
-              className="w-full h-full border-0 block"
+              className="absolute inset-0 w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             />
-          ) : rawUrl && watchUrl ? (
+          ) : rawUrl ? (
             <div className="p-6 text-center space-y-4 max-w-md">
               <div className="w-14 h-14 mx-auto rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
                 <Youtube className="w-8 h-8" />
@@ -183,7 +154,7 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
                 </p>
               </div>
               <a
-                href={watchUrl}
+                href={rawUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25"
@@ -203,7 +174,7 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
         </div>
 
         {/* Footer info & links */}
-        <div className="shrink-0 p-3.5 sm:p-4 bg-slate-900 border-t border-slate-800 space-y-3">
+        <div className="shrink-0 p-4 bg-slate-900 border-t border-slate-800 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="space-y-0.5">
               <span className="text-xs font-bold text-slate-200 block">
@@ -276,7 +247,4 @@ export const YouTubeModal: React.FC<YouTubeModalProps> = ({
       </div>
     </div>
   );
-
-  return createPortal(modalContent, document.body);
 };
-

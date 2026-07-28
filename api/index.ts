@@ -12,18 +12,6 @@
  */
 
 import { GoogleGenAI } from '@google/genai';
-import {
-  getDocumentSeoItem,
-  syncSaplSeo,
-  getSeoAuditData,
-  generateDynamicSitemapXml,
-  buildPreRenderedHtml,
-} from '../lib/seo/seoCache';
-import { isValidApiKey, extractApiKeyFromReq, maskApiKey } from '../lib/apiKeyAuth';
-import { getGeminiApiKey } from '../lib/geminiKey';
-import { stripMarkdown } from '../lib/stripMarkdown';
-import { applyCorsHeaders } from '../lib/cors';
-import { getClientIp, checkRateLimit } from '../lib/rateLimiter';
 
 const SAPL_API_BASE = 'https://sapl.pedroafonso.to.leg.br/api';
 const SAPL_PUBLIC   = 'https://sapl.pedroafonso.to.leg.br';
@@ -435,8 +423,7 @@ async function handleContato(body: any) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
     return { status:400, data:{ sucesso:false, erro:'Formato de e-mail inválido.' } };
   try {
-    const { enviarEmail, validarConfigEmail } = await import('../lib/mail/mailer');
-    validarConfigEmail();
+    const { enviarEmail } = await import('../lib/mail/mailer');
     await enviarEmail({
       nome:     nome.trim(),
       email:    email.trim(),
@@ -445,179 +432,63 @@ async function handleContato(body: any) {
       origem:   (origem || 'Contato').trim(),
     });
     return { status:200, data:{ sucesso:true } };
-  } catch (err: any) {
-    console.error('[contato] Erro detalhado ao enviar e-mail via SMTP:', {
-      message: err?.message || String(err),
-      code: err?.code,
-      command: err?.command,
-      response: err?.response,
-    });
+  } catch (err) {
+    console.error('[contato]', String(err));
     return { status:500, data:{ sucesso:false, erro:'Falha ao enviar e-mail. Tente novamente mais tarde.' } };
   }
 }
 
 async function handleChat(body: any) {
-  const GEMINI_API_KEY = getGeminiApiKey();
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_API_KEY)
-    return { status: 503, data: { error: 'Serviço de IA indisponível: chave de API não configurada.' } };
-
-  const message = typeof body?.message === 'string' ? body.message.trim() : '';
-  const history = Array.isArray(body?.history) ? body.history : [];
-  if (!message) return { status: 400, data: { error: 'Mensagem inválida.' } };
-
+    return { status:503, data:{ error:'Serviço de IA indisponível: chave de API não configurada.' } };
+  const message  = typeof body?.message === 'string' ? body.message.trim() : '';
+  const history  = Array.isArray(body?.history) ? body.history : [];
+  if (!message) return { status:400, data:{ error:'Mensagem inválida.' } };
   try {
     const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    const systemInstruction = `Você é o assistente virtual do Paflegis, um aplicativo cívico e independente. Você é focado em ajudar o usuário com dúvidas sobre matérias legislativas, normas jurídicas e sessões plenárias do Legislativo de Pedro Afonso - TO. Se o usuário perguntar quem você é ou se você é da câmara, deixe claro que você é o assistente do aplicativo independente Paflegis, e não um representante oficial do órgão.
+    const systemInstruction = `Você é o assistente do Paflegis, focado em ajudar o usuário com dúvidas sobre matérias legislativas, normas jurídicas e sessões plenárias.
 
 DIRETRIZES DE CONVERSA:
-1. Responda em português do Brasil, de forma clara, direta, cordial e objetiva.
+1. Responda em português do Brasil, de forma clara, direta e cordial.
 2. Analise todo o histórico de mensagens enviado a cada turno para manter contexto e evitar repetições.
 3. Se não entender a pergunta, peça para o usuário reformular, mantendo tom profissional.
-4. Você não tem acesso ao status técnico da infraestrutura da aplicação (limites de uso, erros de rede, disponibilidade do servidor). Se o usuário mencionar ter visto uma mensagem de erro técnico, não confirme nem negue o estado do sistema, apenas oriente-o a tentar novamente e, se persistir, avise que pode reportar o problema pelo formulário de contato.
-5. Se a pergunta estiver claramente fora do escopo do Paflegis — ou seja, não estiver relacionada ao Legislativo de Pedro Afonso, matérias legislativas, normas jurídicas, sessões plenárias ou ao processo legislativo municipal — comece sua resposta com a tag exata [FORA_DO_ESCOPO] (sem espaço antes), explique brevemente o que você pode ajudar, mas não responda à pergunta fora de escopo com informações gerais. Exemplos de perguntas fora de escopo: receitas culinárias, esportes, entretenimento, saúde geral, questões jurídicas federais sem relação com o município, entre outros.
-6. FORMATO DE TEXTO: Responda ESTRITAMENTE em TEXTO PLANO PURO. NUNCA use formatação markdown de nenhum tipo: NÃO use asteriscos (* ou **), NÃO use sublinhados (__), NÃO use hashtags (#) para títulos, NÃO use divisórias (---) e NÃO use marcadores de lista com asterisco. Para listas ou enumerações, use numeração simples (1., 2., 3.) ou parágrafos curtos. Separe tópicos apenas com quebras de linha normais.
-7. Mantenha a resposta completa e conclusiva, sem interromper o raciocínio ou deixar frases incompletas.`;
-
+4. Você não tem acesso ao status técnico da infraestrutura da aplicação (limites de uso, erros de rede, disponibilidade do servidor). Se o usuário mencionar ter visto uma mensagem de erro técnico, não confirme nem negue o estado do sistema, apenas oriente-o a tentar novamente e, se persistir, avise que pode reportar o problema pelo formulário de contato.`;
     const contents = [
-      ...history
-        .filter((m: any) => m.role === 'user' || m.role === 'assistant')
-        .map((m: any) => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: String(m.content) }],
-        })),
-      { role: 'user', parts: [{ text: message }] },
+      ...history.filter((m:any)=>m.role==='user'||m.role==='assistant').map((m:any)=>({ role:m.role==='assistant'?'model':'user', parts:[{text:String(m.content)}] })),
+      { role:'user', parts:[{text:message}] },
     ];
-
-    let rawReply: string | undefined;
-    let isOutOfScope = false;
+    // Retry com backoff exponencial: até 2 tentativas adicionais ao receber 429 do Gemini.
+    let reply: string | undefined;
     let lastErr: unknown;
-
-    // Retry com backoff generoso e jitter (até 3 retentativas = 4 tentativas no total)
-    const retryDelays = [1000, 3000, 6000];
-
-    for (let attempt = 0; attempt <= 3; attempt++) {
-      if (attempt > 0) {
-        const jitter = Math.floor(Math.random() * 500);
-        const delayMs = retryDelays[attempt - 1] + jitter;
-        await new Promise<void>(r => setTimeout(r, delayMs));
-      }
-
+    for (let attempt = 0; attempt <= 2; attempt++) {
+      if (attempt > 0) await new Promise<void>(r => setTimeout(r, attempt * 2000));
       try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
-          contents,
-          config: { systemInstruction, maxOutputTokens: 2048, temperature: 0.6 },
-        });
-
-        const candidate = response.candidates?.[0];
-        const finishReasonStr = String(candidate?.finishReason || '');
-        let generatedText = response.text?.trim() || candidate?.content?.parts?.[0]?.text?.trim() || '';
-
-        // Se a resposta foi interrompida por atingir o teto de tokens, tenta re-gerar uma vez com teto maior
-        if (finishReasonStr.toUpperCase().includes('MAX') && generatedText.length > 0) {
-          console.warn('[api/index.ts handleChat] Resposta truncada por MAX_TOKENS. Tentando re-gerar com teto de 3072 tokens...');
-          try {
-            const retryResp = await ai.models.generateContent({
-              model: 'gemini-3.5-flash',
-              contents,
-              config: { systemInstruction, maxOutputTokens: 3072, temperature: 0.5 },
-            });
-            const retryText = retryResp.text?.trim() || retryResp.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-            if (retryText && retryText.length > generatedText.length) {
-              generatedText = retryText;
-            }
-          } catch (retryTokenErr) {
-            console.error('[api/index.ts handleChat] Erro na tentativa de expandir tokens:', retryTokenErr);
-          }
-        }
-
-        // Se o texto não terminar com pontuação conclusiva (. ! ? :), apara no último ponto final completo
-        if (generatedText && !/[.!?:]$/.test(generatedText)) {
-          const lastPunct = Math.max(
-            generatedText.lastIndexOf('.'),
-            generatedText.lastIndexOf('!'),
-            generatedText.lastIndexOf('?')
-          );
-          if (lastPunct > 50) {
-            generatedText = generatedText.slice(0, lastPunct + 1);
-          }
-        }
-
-        if (!generatedText) {
-          generatedText = 'Não consegui gerar uma resposta completa. Por favor, tente novamente.';
-        }
-
-        const outOfScopeTag = '[FORA_DO_ESCOPO]';
-        if (generatedText.startsWith(outOfScopeTag)) {
-          rawReply = generatedText.slice(outOfScopeTag.length).trimStart();
-          isOutOfScope = true;
-        } else {
-          rawReply = generatedText;
-        }
-
-        break; // Sucesso na tentativa
+        const response = await ai.models.generateContent({ model:'gemini-2.0-flash', contents, config:{ systemInstruction, maxOutputTokens:512, temperature:0.7 } });
+        reply = response.text?.trim() || 'Não consegui gerar uma resposta.';
+        break;
       } catch (err: any) {
-        lastErr = err;
-        const status = err?.status || err?.code;
-        const isQuota = status === 429 || (typeof err?.message === 'string' && (err.message.includes('429') || err.message.toUpperCase().includes('RESOURCE_EXHAUSTED')));
-
-        console.error(`[handleChat Gemini Error] Tentativa ${attempt + 1}/4 falhou:`, {
-          status,
-          message: err?.message || String(err),
-          code: err?.code,
-          errorDetails: err?.errorDetails || err?.response?.data,
-          headers: err?.response?.headers || err?.headers,
-        });
-
-        if (isQuota && attempt < 3) {
-          continue;
-        }
+        const isQuota = err?.status===429 || (typeof err?.message==='string' && (err.message.includes('429') || err.message.toUpperCase().includes('RESOURCE_EXHAUSTED')));
+        if (isQuota && attempt < 2) { lastErr = err; continue; }
         throw err;
       }
     }
-
-    if (rawReply !== undefined) {
-      // Sanitização de Markdown antes de entregar ao cliente
-      const cleanReply = stripMarkdown(rawReply);
-      return { status: 200, data: { reply: cleanReply, outOfScope: isOutOfScope } };
-    }
-
+    if (reply !== undefined) return { status:200, data:{ reply } };
     throw lastErr;
   } catch (err: any) {
-    console.error('[handleChat Fatal Error]', {
-      message: err?.message || String(err),
-      status: err?.status || err?.code,
-      stack: err?.stack,
-    });
-
-    const msg = String(err?.message || '');
-    const status = err?.status || err?.code;
-    const isRateLimit = status === 429 || msg.includes('429') || msg.toUpperCase().includes('RESOURCE_EXHAUSTED');
-
-    if (isRateLimit) {
-      return {
-        status: 429,
-        data: {
-          error: 'Limite de cota de requisições excedido. Por favor, aguarde alguns instantes e tente novamente.',
-          code: 'RATE_LIMIT_EXCEEDED',
-        },
-      };
-    }
-
-    return {
-      status: 503,
-      data: {
-        error: 'O assistente está temporariamente indisponível. Tente novamente em instantes.',
-        code: 'SERVICE_UNAVAILABLE',
-      },
-    };
+    const msg = String(err?.message||'');
+    if (err?.status===429||msg.includes('429')||msg.toUpperCase().includes('RESOURCE_EXHAUSTED'))
+      return { status:429, data:{ error:'Muitas solicitações. Tente novamente em instantes.' } };
+    return { status:503, data:{ error:'O assistente está temporariamente indisponível.' } };
   }
 }
 
 // ── roteador principal ─────────────────────────────────────────────────────
 export default async function handler(req: any, res: any) {
-  // CORS dinâmico com base em ALLOWED_ORIGINS
-  applyCorsHeaders(req, res);
+  // CORS preflight
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
   // Vercel injeta _path via dest: "/api/index?_path=$1"
@@ -637,79 +508,10 @@ export default async function handler(req: any, res: any) {
   const qs: Record<string,string|string[]> = { ...req.query };
   delete (qs as any)._path;
 
-  // Validação de API Key para todas as rotas /v1/*
-  const isDataRoute = rawPath.startsWith('/v1/') || rawPath === '/v1';
-  if (isDataRoute) {
-    const key = extractApiKeyFromReq(req);
-    if (!isValidApiKey(key)) {
-      console.warn(`[AUDITORIA API KEY VERCEL] Rejeitado acesso não autorizado. Rota: ${rawPath} | Key: ${maskApiKey(key)}`);
-      res.status(401).json({
-        error: 'Chave de API ausente ou inválida. Forneça um cabeçalho x-api-key válido.',
-        code: 'UNAUTHORIZED_API_KEY',
-      });
-      return;
-    }
-  }
-
   const method = req.method?.toUpperCase() || 'GET';
   let result: { status:number; data:unknown };
 
   if (method === 'GET') {
-    if (rawPath === '/sitemap.xml') {
-      try {
-        const xml = await generateDynamicSitemapXml();
-        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-        res.status(200).send(xml);
-        return;
-      } catch (err) {
-        res.setHeader('Content-Type', 'application/xml');
-        res.status(500).send('<?xml version="1.0"?><error>Falha ao gerar sitemap</error>');
-        return;
-      }
-    }
-
-    if (rawPath === '/v1/seo-audit' || rawPath === '/seo-audit') {
-      res.status(200).json(getSeoAuditData());
-      return;
-    }
-
-    if (rawPath === '/v1/sync-seo' || rawPath === '/sync-seo') {
-      const log = await syncSaplSeo();
-      res.status(200).json({ sucesso: true, log });
-      return;
-    }
-
-    // Rota de SSR/Pré-renderização HTML para Matérias, Normas e Sessões
-    const ssrMatch = rawPath.match(/^\/ssr\/(materias|normas|sessoes)\/(\d+)\/?$/);
-    if (ssrMatch) {
-      const type = ssrMatch[1] as 'materias' | 'normas' | 'sessoes';
-      const id = ssrMatch[2];
-      try {
-        const item = await getDocumentSeoItem(type, id);
-        // HTML genérico base do index.html
-        const baseHtml = `<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Paflegis - Processo Legislativo Aberto</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>`;
-        if (item) {
-          const html = buildPreRenderedHtml(baseHtml, item);
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          res.status(200).send(html);
-          return;
-        }
-      } catch (e) {
-        console.warn(`[Vercel SSR] Erro ao pré-renderizar ${type}/${id}:`, e);
-      }
-    }
-
     if      (rawPath === '/health' || rawPath === '/v1/health')       result = await handleHealth();
     else if (rawPath === '/v1/tipos/materias')                        result = await handleTiposMaterias();
     else if (rawPath === '/v1/tipos/normas')                          result = await handleTiposNormas();
@@ -722,39 +524,9 @@ export default async function handler(req: any, res: any) {
     else if (rawPath === '/v1/estatisticas' || rawPath === '/stats')  result = await handleEstatisticas();
     else result = { status:404, data:{ error:'Endpoint não encontrado.' } };
   } else if (method === 'POST') {
-    if (rawPath === '/v1/sync-seo' || rawPath === '/sync-seo') {
-      const log = await syncSaplSeo();
-      res.status(200).json({ sucesso: true, log });
-      return;
-    }
-    if (rawPath === '/v1/contato' || rawPath === '/contato') {
-      const clientIp = getClientIp(req);
-      const rl = checkRateLimit(clientIp, 5, 60 * 1000);
-      if (!rl.allowed) {
-        res.setHeader('Retry-After', '60');
-        res.status(429).json({
-          sucesso: false,
-          erro: 'Muitas tentativas de envio em curto intervalo. Por favor, aguarde um minuto.',
-          code: 'RATE_LIMIT_EXCEEDED',
-        });
-        return;
-      }
-      result = await handleContato(req.body);
-    } else if (rawPath === '/chat' || rawPath === '/v1/chat') {
-      const clientIp = getClientIp(req);
-      const rl = checkRateLimit(clientIp, 10, 60 * 1000);
-      if (!rl.allowed) {
-        res.setHeader('Retry-After', '60');
-        res.status(429).json({
-          error: 'Muitas mensagens enviadas em curto intervalo. Por favor, aguarde um minuto e tente novamente.',
-          code: 'RATE_LIMIT_EXCEEDED',
-        });
-        return;
-      }
-      result = await handleChat(req.body);
-    } else {
-      result = { status: 404, data: { error: 'Endpoint não encontrado.' } };
-    }
+    if      (rawPath === '/v1/contato' || rawPath === '/contato') result = await handleContato(req.body);
+    else if (rawPath === '/chat'       || rawPath === '/v1/chat') result = await handleChat(req.body);
+    else result = { status:404, data:{ error:'Endpoint não encontrado.' } };
   } else {
     result = { status:404, data:{ error:'Endpoint não encontrado.' } };
   }

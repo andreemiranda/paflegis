@@ -130,26 +130,26 @@ export const MateriasView: React.FC<MateriasViewProps> = ({ initialSearch = '' }
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Keyword Search */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Palavra-chave / Nº</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Palavra-chave / Nº</label>
             <div className="relative">
               <input
                 type="text"
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 placeholder="Ex: PL 42, iluminação..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 min-h-[42px]"
+                className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-3 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
             </div>
           </div>
 
           {/* Type Select */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Tipo de Matéria</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Tipo de Matéria</label>
             <select
               value={tipoSelecao}
               onChange={e => setTipoSelecao(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 min-h-[42px] cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
             >
               <option value="">Todos os Tipos</option>
               {tipos.map(t => (
@@ -162,11 +162,11 @@ export const MateriasView: React.FC<MateriasViewProps> = ({ initialSearch = '' }
 
           {/* Year Select */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Ano de Apresentação</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Ano de Apresentação</label>
             <select
               value={anoSelecao}
               onChange={e => setAnoSelecao(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 min-h-[42px] cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
             >
               <option value="">Todos os Anos</option>
               {anosDisponiveis.map(a => (

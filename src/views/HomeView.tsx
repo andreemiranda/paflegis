@@ -4,6 +4,7 @@ import {
   BookOpen,
   Users,
   Search,
+  Sparkles,
   ArrowRight,
   TrendingUp,
   Building2,
@@ -109,7 +110,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="relative z-10 max-w-2xl space-y-3">
           <div className="inline-flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-md text-xs font-semibold text-blue-400 border border-slate-700">
-            <span className="uppercase tracking-wider text-xs">Facilitador de Consulta Pública</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span className="uppercase tracking-wider text-[10px]">Facilitador de Consulta Pública</span>
           </div>
 
           <h1 className="text-lg sm:text-xl font-semibold text-white tracking-tight leading-tight">
@@ -169,8 +171,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {(stats.fonte === 'sapl-live' || stats.fonte === 'disk-cache') && (() => {
             const label = formatAtualizadoEm(stats.atualizado_em, stats.cache_age_s);
             return label ? (
-              <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium">
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
+                <Clock className="w-3 h-3 text-slate-400" />
                 <span>
                   {stats.fonte === 'disk-cache' ? 'Cache local · atualizado ' : 'Atualizado '}
                   {label}
@@ -180,19 +182,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
           })()}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div className="text-slate-600 text-xs font-bold uppercase tracking-wider">Matérias Registradas</div>
+            <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">Matérias Registradas</div>
             <div className="text-2xl sm:text-3xl font-bold text-slate-900">{stats.total_materias}</div>
             <div className="text-emerald-600 text-xs font-semibold pt-1">+ {stats.materias_ano_atual} este ano</div>
           </div>
 
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div className="text-slate-600 text-xs font-bold uppercase tracking-wider">Normas Jurídicas</div>
+            <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">Normas Jurídicas</div>
             <div className="text-2xl sm:text-3xl font-bold text-slate-900">{stats.total_normas}</div>
             <div className="text-emerald-600 text-xs font-semibold pt-1">+ {stats.normas_ano_atual} publicadas</div>
           </div>
 
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
-            <div className="text-slate-600 text-xs font-bold uppercase tracking-wider">Sessões Plenárias</div>
+            <div className="text-slate-500 text-[11px] font-bold uppercase tracking-wider">Sessões Plenárias</div>
             <div className="text-2xl sm:text-3xl font-bold text-slate-900">{stats.total_sessoes}</div>
             <div className="text-blue-600 text-xs font-semibold pt-1">{stats.sessoes_ano_atual} em 2026</div>
           </div>
@@ -264,7 +266,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 Sessões Plenárias
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Pautas, atas, presença de vereadores e vídeos das sessões.
+                Pautas, atas, presença de vereadores e áudios.
               </p>
             </div>
           </div>

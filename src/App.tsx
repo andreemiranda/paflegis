@@ -23,28 +23,9 @@ import { CentralDePrivacidadeView } from './views/CentralDePrivacidadeView';
 import { ApiDocsView } from './views/ApiDocsView';
 import { ContatoView } from './views/ContatoView';
 import { DocumentTypeView } from './views/DocumentTypeView';
-import { SeoAuditView } from './views/SeoAuditView';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const p = window.location.pathname.toLowerCase();
-      if (p.includes('seo-audit')) return 'seo-audit';
-      if (p.startsWith('/materias')) return 'materias';
-      if (p.startsWith('/normas')) return 'normas';
-      if (p.startsWith('/sessoes')) return 'sessoes';
-      if (p.startsWith('/sobre')) return 'sobre';
-      if (p.startsWith('/contato')) return 'contato';
-      if (p.startsWith('/api-docs')) return 'api-docs';
-      if (p.startsWith('/termos-de-uso')) return 'termos-de-uso';
-      if (p.startsWith('/politica-de-privacidade')) return 'politica-de-privacidade';
-      if (p.startsWith('/aviso-de-dados-publicos')) return 'aviso-de-dados-publicos';
-      if (p.startsWith('/politica-de-cookies')) return 'politica-de-cookies';
-      if (p.startsWith('/aviso-legal')) return 'aviso-legal';
-      if (p.startsWith('/central-de-privacidade')) return 'central-de-privacidade';
-    }
-    return 'home';
-  });
+  const [currentTab, setCurrentTab] = useState<string>('home');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [accessibilityModalOpen, setAccessibilityModalOpen] = useState(false);
@@ -103,8 +84,6 @@ export default function App() {
         return <ContatoView />;
       case 'api-docs':
         return <ApiDocsView />;
-      case 'seo-audit':
-        return <SeoAuditView />;
       default: {
         // Roteamento dinâmico: tipo:materia:<slug> | tipo:norma:<slug> | tipo:both:<slug>
         if (currentTab.startsWith('tipo:')) {
@@ -125,7 +104,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa] text-[#404040] selection:bg-[#bae6fd] selection:text-[#075985] pt-[48px] sm:pt-[42px] max-w-full w-full overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#fafafa] text-[#404040] selection:bg-[#bae6fd] selection:text-[#075985]">
       <AccessibilityBar
         onOpenAccessibilityModal={() => setAccessibilityModalOpen(true)}
         onOpenSitemapModal={() => setSitemapModalOpen(true)}

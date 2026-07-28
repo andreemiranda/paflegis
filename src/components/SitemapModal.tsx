@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Map, X, ChevronRight, FileText, BookOpen, Users, Info, Mail,
+  Map, X, ChevronRight, FileText, BookOpen, Users, Info,
   ShieldCheck, Code2, Cookie, Scale, Lock, FileCheck,
 } from 'lucide-react';
 
@@ -18,7 +18,6 @@ export const SitemapModal: React.FC<SitemapModalProps> = ({ onSelectTab, onClose
         { id: 'materias', label: 'Matérias Legislativas',        icon: FileText },
         { id: 'normas',   label: 'Normas Jurídicas',             icon: BookOpen },
         { id: 'sessoes',  label: 'Sessões Plenárias',            icon: Users },
-        { id: 'contato',  label: 'Contato',                      icon: Mail },
         { id: 'sobre',    label: 'Sobre o Paflegis',             icon: Info },
         { id: 'api-docs', label: 'API Swagger Pública',          icon: Code2 },
       ],

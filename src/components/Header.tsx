@@ -30,7 +30,6 @@ export const Header: React.FC<HeaderProps> = ({
   onSearch,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') onSearch();
@@ -41,8 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'materias', label: 'Matérias', icon: FileText },
     { id: 'normas', label: 'Normas', icon: BookOpen },
     { id: 'sessoes', label: 'Sessões', icon: Users },
-    { id: 'contato', label: 'Contato', icon: Mail },
     { id: 'sobre', label: 'Sobre', icon: Info },
+    { id: 'contato', label: 'Contato', icon: Mail },
     { id: 'api-docs', label: 'API Swagger', icon: Code2, highlight: true },
   ];
 
@@ -52,71 +51,55 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="relative bg-slate-900 border-b border-slate-800 text-white shadow-sm w-full max-w-full overflow-x-hidden">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 w-full">
-        <div className="flex items-center justify-between h-16 sm:h-18 gap-2 xl:gap-3 w-full">
+    <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 text-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
           {/* Brand Logo & Title */}
           <div
             onClick={() => handleNavClick('home')}
-            className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group shrink-0 py-1"
+            className="flex items-center gap-3 cursor-pointer group shrink-0"
           >
-            <img src="/images/logo.jpg" alt="Paflegis" className="h-8 sm:h-9 xl:h-10 w-auto rounded-lg shadow-sm" />
+            <img src="/images/logo.jpg" alt="Paflegis" className="h-9 w-auto rounded-lg shadow-sm" />
             <div>
-              <span className="font-bold text-white text-base sm:text-lg xl:text-xl tracking-tight font-sans">
-                Paflegis
-              </span>
-              <p className="text-[10px] sm:text-xs text-slate-400 leading-none mt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-white text-lg tracking-tight font-sans">
+                  Paflegis
+                </span>
+                <span className="bg-slate-800 text-blue-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-700 uppercase tracking-wider">
+                  TO
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-none">
                 Consulta Legislativa Independente
               </p>
             </div>
           </div>
 
-          {/* Quick Search Bar (Desktop LG+) */}
-          <div className="hidden lg:flex flex-1 items-center mx-2 max-w-sm xl:max-w-md 2xl:max-w-lg min-w-[200px]">
-            <div
-              className={`relative w-full transition-all duration-200 ease-in-out flex items-center gap-1.5 ${
-                isFocused ? 'ring-2 ring-blue-500/40 rounded-lg z-30' : ''
-              }`}
-            >
+          {/* Quick Search Bar (Desktop) */}
+          <div className="hidden md:flex flex-1 max-w-md mx-2">
+            <div className="relative w-full flex gap-1.5">
               <div className="relative flex-1">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => onSearchChange(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
                   placeholder="Buscar matérias, leis, decretos, sessões..."
-                  className={`w-full bg-slate-800/90 text-slate-100 placeholder-slate-400 border rounded-lg pl-9 pr-8 py-2 text-xs sm:text-sm transition-colors shadow-inner focus:outline-none min-h-[38px] ${
-                    isFocused
-                      ? 'border-blue-500 bg-slate-900'
-                      : 'border-slate-700/80 hover:border-slate-600'
-                  }`}
+                  className="w-full bg-slate-800/90 text-slate-100 placeholder-slate-400 border border-slate-700/80 rounded-md pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:border-blue-500 focus:bg-slate-900 transition-colors"
                 />
-                <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
-                {searchQuery && (
-                  <button
-                    onClick={() => onSearchChange('')}
-                    onMouseDown={e => e.preventDefault()}
-                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white p-0.5 rounded-full hover:bg-slate-700 transition-colors cursor-pointer"
-                    title="Limpar busca"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
               </div>
               <button
                 onClick={onSearch}
-                className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors cursor-pointer min-h-[38px] flex items-center gap-1.5 shadow-sm"
+                className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
               >
-                <Search className="w-3.5 h-3.5" />
-                <span>Buscar</span>
+                Buscar
               </button>
             </div>
           </div>
 
-          {/* Navigation Links (Desktop LG+) */}
-          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 shrink-0">
+          {/* Navigation Links (Desktop) */}
+          <nav className="hidden lg:flex items-center gap-1">
             {navItems.map(item => {
               const Icon = item.icon;
               const active = currentTab === item.id;
@@ -124,42 +107,40 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`flex items-center gap-1.5 px-2 xl:px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs xl:text-xs 2xl:text-sm font-semibold transition-colors cursor-pointer min-h-[36px] whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                     active
                       ? 'bg-blue-600 text-white shadow-sm'
                       : item.highlight
                       ? 'bg-slate-800 text-amber-300 hover:bg-slate-700 border border-slate-700'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 xl:w-4 xl:h-4 shrink-0" />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
                 </button>
               );
             })}
           </nav>
 
-          {/* Right Status Badge (LG+) */}
-          <div className="hidden lg:flex items-center gap-1.5 pl-2 border-l border-slate-800 text-xs shrink-0">
+          {/* Right Status Badge */}
+          <div className="hidden xl:flex items-center gap-2 pl-2 border-l border-slate-800 text-xs">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-[11px] xl:text-xs font-mono text-slate-300 uppercase tracking-wider whitespace-nowrap">
-              API SAPL
-            </span>
+            <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">API SAPL</span>
           </div>
 
-          {/* Mobile Menu Hamburger Button (<1024px) */}
+          {/* Mobile Menu Hamburger Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors border border-slate-700 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
+            className="lg:hidden p-2 rounded-md bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors border border-slate-700"
             aria-label="Abrir Menu de Navegação"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
-        {/* Mobile / Tablet Search Input (<1024px) */}
-        <div className="pb-3 lg:hidden">
-          <div className="flex gap-2">
+        {/* Mobile Search Input */}
+        <div className="pb-3 md:hidden">
+          <div className="flex gap-1.5">
             <div className="relative flex-1">
               <input
                 type="text"
@@ -167,25 +148,15 @@ export const Header: React.FC<HeaderProps> = ({
                 onChange={e => onSearchChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Buscar em Pedro Afonso (Ex: PL 42, Lei 1450)..."
-                className="w-full bg-slate-800 text-slate-100 placeholder-slate-400 border border-slate-700 rounded-lg pl-9 pr-8 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all min-h-[42px]"
+                className="w-full bg-slate-800 text-slate-100 placeholder-slate-400 border border-slate-700 rounded-md pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:border-blue-500 transition-all"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-3 pointer-events-none" />
-              {searchQuery && (
-                <button
-                  onClick={() => onSearchChange('')}
-                  className="absolute right-2.5 top-3 text-slate-400 hover:text-white p-0.5 rounded-full hover:bg-slate-700 transition-colors cursor-pointer"
-                  title="Limpar busca"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
             </div>
             <button
               onClick={onSearch}
-              className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors cursor-pointer min-h-[42px] flex items-center gap-1.5 shadow-sm"
+              className="shrink-0 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md transition-colors"
             >
-              <Search className="w-4 h-4" />
-              <span>Buscar</span>
+              Buscar
             </button>
           </div>
         </div>
@@ -207,14 +178,14 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
+                className="p-1.5 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="mt-4 flex-1 space-y-1">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2 py-1">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-2 py-1">
                 Navegação
               </p>
               {navItems.map(item => {
@@ -224,31 +195,31 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-3 rounded-lg text-sm font-semibold transition-colors cursor-pointer min-h-[44px] ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-md text-xs font-semibold transition-colors ${
                       active
                         ? 'bg-blue-600 text-white font-bold'
                         : item.highlight
                         ? 'bg-slate-800 text-amber-300 font-bold border border-slate-700'
-                        : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-slate-400'}`} />
                       <span>{item.label}</span>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <ChevronRight className="w-4 h-4 text-slate-500" />
                   </button>
                 );
               })}
             </div>
 
             <div className="pt-4 border-t border-slate-800 mt-auto bg-slate-950/50 -mx-5 -mb-5 p-5">
-              <div className="flex items-center gap-2 text-xs text-slate-300 mb-1">
-                <Sparkles className="w-4 h-4 text-blue-400" />
+              <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                 <span>Consulta às Informações Públicas do SAPL</span>
               </div>
-              <p className="text-xs text-slate-400">
-                Desenvolvido por <strong className="text-slate-200">Paflegis</strong> (Aplicação Independente).
+              <p className="text-[11px] text-slate-500">
+                Desenvolvido por <strong className="text-slate-300">Paflegis</strong> (Aplicação Independente).
               </p>
             </div>
           </div>

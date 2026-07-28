@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Bot, User, Loader2, ChevronDown, Clock, WifiOff, RotateCcw, Info, Trash2 } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Loader2, ChevronDown, Clock, WifiOff, RotateCcw, Info } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -186,20 +186,20 @@ export function AIChatAssistant() {
         <div className="fixed bottom-24 right-6 z-50 w-[min(380px,calc(100vw-2rem))] flex flex-col rounded-2xl shadow-2xl border border-slate-200 bg-white overflow-hidden animate-fade-in">
 
           {/* Header */}
-          <div className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white">
+          <div className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white">
             <Bot className="w-5 h-5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm leading-tight">Assistente Paflegis</p>
+              <p className="text-xs text-blue-100 truncate">Paflegis</p>
             </div>
             <button
               onClick={restartChat}
               disabled={loading}
-              aria-label="Apagar mensagens e reiniciar chat"
-              title="Apagar mensagens / Reiniciar chat"
-              className="flex items-center gap-1.5 text-xs bg-blue-700 hover:bg-blue-800 px-2.5 py-1.5 rounded-lg text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+              aria-label="Nova conversa"
+              title="Nova conversa"
+              className="p-1 rounded-full hover:bg-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Limpar chat</span>
+              <RotateCcw className="w-4 h-4" />
             </button>
             <button
               onClick={() => setOpen(false)}
@@ -234,7 +234,7 @@ export function AIChatAssistant() {
                   <div className="flex items-start gap-1.5 pl-9 pr-2">
                     <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-blue-500" />
                     <p className="text-xs text-blue-600 leading-snug">
-                      Este assistente responde apenas sobre o Legislativo de Pedro Afonso&nbsp;- TO.
+                      Este assistente responde apenas sobre a Câmara Municipal de Pedro Afonso&nbsp;- TO.
                     </p>
                   </div>
                 )}
@@ -299,7 +299,9 @@ export function AIChatAssistant() {
                 {isServiceUnavailable && !isNetworkError && <WifiOff className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />}
                 {isRateLimit && <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />}
                 <span>
-                  {error}
+                  {isRateLimit
+                    ? 'Estamos com muitas conversas simultâneas. Aguarde alguns instantes e tente novamente.'
+                    : error}
                 </span>
               </div>
             )}

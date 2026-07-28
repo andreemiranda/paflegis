@@ -134,25 +134,25 @@ export const SessoesView: React.FC<SessoesViewProps> = ({ initialSearch = '' }) 
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Buscar por Número ou Tipo</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Buscar por Número ou Tipo</label>
             <div className="relative">
               <input
                 type="text"
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 placeholder="Ex: Ordinária, 14..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 min-h-[42px]"
+                className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
               />
-              <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-3 pointer-events-none" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Ano da Sessão</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Ano da Sessão</label>
             <select
               value={anoSelecao}
               onChange={e => setAnoSelecao(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 min-h-[42px] cursor-pointer"
+              className="w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500"
             >
               <option value="">Todos os Anos</option>
               {anosDisponiveis.map(a => (
