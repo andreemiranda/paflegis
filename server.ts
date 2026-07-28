@@ -8,33 +8,71 @@ import session from 'express-session';
 type ViteDevServer = import('vite').ViteDevServer;
 import { GoogleGenAI } from '@google/genai';
 import { slog, validateEnv, safeFetchWithRetry, checkSaplHealth } from './lib/saplBackend';
-import { enviarEmail } from './lib/mail/mailer';
+import { enviarEmail, validarConfigEmail } from './lib/mail/mailer';
+import {
+  getDocumentSeoItem,
+  syncSaplSeo,
+  getSeoAuditData,
+  generateDynamicSitemapXml,
+  buildPreRenderedHtml,
+} from './lib/seo/seoCache';
+import { apiKeyAuthMiddleware, apiRateLimiter } from './lib/apiKeyAuth';
+import { getGeminiApiKey } from './lib/geminiKey';
+import { stripMarkdown } from './lib/stripMarkdown';
+import { determineCorsOrigin } from './lib/cors';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '5000', 10);
+const PORT = parseInt(process.env.PORT || '3000', 10);
 const IS_PROD = process.env.NODE_ENV === 'production';
+
+// ── Rate limiters para endpoints públicos ─────────────────────────────────────
+const chatRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: 'Muitas mensagens enviadas em curto intervalo. Por favor, aguarde um minuto e tente novamente.',
+      code: 'RATE_LIMIT_EXCEEDED',
+    });
+  },
+});
+
+const contatoRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      sucesso: false,
+      erro: 'Muitas tentativas de envio em curto intervalo. Por favor, aguarde um minuto.',
+      code: 'RATE_LIMIT_EXCEEDED',
+    });
+  },
+});
 
 // ── Env var validation ───────────────────────────────────────────────────────
 validateEnv(process.env as Record<string, string | undefined>, ['GEMINI_API_KEY', 'SESSION_SECRET']);
+validarConfigEmail();
 
 // ── Session secret guard ────────────────────────────────────────────────────
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (IS_PROD && !SESSION_SECRET) {
-  console.error('[FATAL] SESSION_SECRET env var is required in production. Set it before starting.');
-  process.exit(1);
+  console.warn('[WARN] SESSION_SECRET env var is not set in production. Using fallback secret.');
 }
 
 // ── CORS ────────────────────────────────────────────────────────────────────
-// In production allow only same-origin (SPA served by same server).
-// In dev allow all so Vite HMR and direct API calls work.
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : [];
-
-app.use(cors(IS_PROD ? {
-  origin: ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : false,
+app.use(cors({
+  origin: (requestOrigin, callback) => {
+    const originToSet = determineCorsOrigin(requestOrigin);
+    callback(null, originToSet === '*' ? true : originToSet);
+  },
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'X-API-KEY'],
   credentials: true,
-} : { origin: true, credentials: true }));
+}));
 
 app.use(express.json({ limit: '64kb' }));
 
@@ -82,15 +120,82 @@ app.get('/robots.txt', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'robots.txt'));
 });
 
-app.get('/sitemap.xml', (req, res) => {
-  res.header('Content-Type', 'application/xml');
-  res.sendFile(path.join(process.cwd(), 'public', 'sitemap.xml'));
+app.get('/sitemap.xml', async (_req, res) => {
+  try {
+    const xml = await generateDynamicSitemapXml();
+    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.send(xml);
+  } catch (err) {
+    slog('WARN', 'sitemap', 'Falha ao gerar sitemap dinâmico, enviando fallback', err);
+    res.header('Content-Type', 'application/xml');
+    res.sendFile(path.join(process.cwd(), 'public', 'sitemap.xml'));
+  }
 });
 
 app.get('/sitemap.xsl', (req, res) => {
   res.header('Content-Type', 'application/xml');
   res.sendFile(path.join(process.cwd(), 'public', 'sitemap.xsl'));
 });
+
+// ── Middleware de Proteção e Rate Limiting para Rotas de Dados /api/v1 ────
+app.use('/api/v1', apiRateLimiter);
+app.use('/api/v1', apiKeyAuthMiddleware);
+
+// ── SEO Audit & Sync API Endpoints ──────────────────────────────────────────
+app.get('/api/v1/seo-audit', (_req, res) => {
+  res.json(getSeoAuditData());
+});
+
+app.all('/api/v1/sync-seo', async (_req, res) => {
+  try {
+    const log = await syncSaplSeo();
+    res.json({ sucesso: true, log });
+  } catch (err: any) {
+    slog('WARN', 'seo-sync', 'Falha ao sincronizar metadados SEO', err);
+    res.status(500).json({ sucesso: false, erro: err?.message || String(err) });
+  }
+});
+
+// ── Pré-renderização HTML para SEO de Páginas de Documentos ────────────────
+async function handleSsrDocument(
+  req: express.Request,
+  res: express.Response,
+  type: 'materias' | 'normas' | 'sessoes'
+) {
+  const id = req.params.id;
+  const distPath = path.join(process.cwd(), IS_PROD ? 'dist' : 'public');
+  const indexFile = path.join(distPath, 'index.html');
+  const fallbackFile = path.join(process.cwd(), 'index.html');
+
+  let baseHtml = '';
+  if (fs.existsSync(indexFile)) {
+    baseHtml = fs.readFileSync(indexFile, 'utf-8');
+  } else if (fs.existsSync(fallbackFile)) {
+    baseHtml = fs.readFileSync(fallbackFile, 'utf-8');
+  }
+
+  if (!baseHtml) {
+    return res.status(404).send('Página não encontrada.');
+  }
+
+  try {
+    const item = await getDocumentSeoItem(type, id);
+    if (item) {
+      const html = buildPreRenderedHtml(baseHtml, item);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    }
+  } catch (e) {
+    slog('WARN', 'ssr-doc', `Falha ao pré-renderizar SEO para ${type}/${id}`, e);
+  }
+
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  return res.send(baseHtml);
+}
+
+app.get('/materias/:id', (req, res) => handleSsrDocument(req, res, 'materias'));
+app.get('/normas/:id', (req, res) => handleSsrDocument(req, res, 'normas'));
+app.get('/sessoes/:id', (req, res) => handleSsrDocument(req, res, 'sessoes'));
 
 const SAPL_API_BASE = 'https://sapl.pedroafonso.to.leg.br/api';
 const SAPL_PUBLIC_DOMAIN = 'https://sapl.pedroafonso.to.leg.br';
@@ -208,10 +313,10 @@ const openApiSpec = {
     title: 'Paflegis Public API - Pedro Afonso - TO',
     version: '1.0.0',
     description:
-      'API pública otimizada e normalizada do Paflegis, agregando dados de Matérias Legislativas, Normas Jurídicas e Sessões Plenárias de Pedro Afonso - TO. Fonte original oficial: SAPL Pedro Afonso-TO.',
+      'API pública otimizada e normalizada do Paflegis. ATENÇÃO: Todas as requisições às rotas de dados /api/v1/* exigem obrigatoriamente a inclusão do cabeçalho `x-api-key`. Exemplo cURL: `curl -H "x-api-key: SUA_CHAVE" https://paflegis.vercel.app/api/v1/materias`. Para solicitar uma chave de parceiro para seu aplicativo externo, utilize o formulário na aba de Contato do Paflegis.',
     contact: {
-      name: 'Paflegis - Transparência Legislativa',
-      url: 'https://sapl.pedroafonso.to.leg.br',
+      name: 'Paflegis - Consulta Pública Legislativa',
+      url: 'https://paflegis.vercel.app',
     },
   },
   servers: [
@@ -219,6 +324,19 @@ const openApiSpec = {
       url: '/api/v1',
       description: 'Servidor Proxy e Agregador Paflegis',
     },
+  ],
+  components: {
+    securitySchemes: {
+      ApiKeyAuth: {
+        type: 'apiKey',
+        in: 'header',
+        name: 'x-api-key',
+        description: 'Chave de API necessária para todas as rotas de dados /api/v1/*. Envie o cabeçalho x-api-key com sua chave autorizada.',
+      },
+    },
+  },
+  security: [
+    { ApiKeyAuth: [] }
   ],
   paths: {
     '/materias': {
@@ -291,10 +409,9 @@ const openApiSpec = {
 };
 
 // ── AI Chat Endpoint ──────────────────────────────────────────────────────────
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-app.post('/api/chat', async (req, res) => {
-  if (!GEMINI_API_KEY) {
+app.post(['/api/chat', '/api/v1/chat'], chatRateLimiter, async (req, res) => {
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
     return res.status(503).json({ error: 'Serviço de IA indisponível: chave de API não configurada.' });
   }
 
@@ -308,16 +425,18 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
 
-    const systemInstruction = `Você é o assistente do Paflegis, focado em ajudar o usuário com dúvidas sobre matérias legislativas, normas jurídicas e sessões plenárias da Câmara Municipal de Pedro Afonso - TO.
+    const systemInstruction = `Você é o assistente virtual do Paflegis, um aplicativo cívico e independente. Você é focado em ajudar o usuário com dúvidas sobre matérias legislativas, normas jurídicas e sessões plenárias do Legislativo de Pedro Afonso - TO. Se o usuário perguntar quem você é ou se você é da câmara, deixe claro que você é o assistente do aplicativo independente Paflegis, e não um representante oficial do órgão.
 
 DIRETRIZES DE CONVERSA:
-1. Responda em português do Brasil, de forma clara, direta e cordial.
+1. Responda em português do Brasil, de forma clara, direta, cordial e objetiva.
 2. Analise todo o histórico de mensagens enviado a cada turno para manter contexto e evitar repetições.
 3. Se não entender a pergunta, peça para o usuário reformular, mantendo tom profissional.
 4. Você não tem acesso ao status técnico da infraestrutura da aplicação (limites de uso, erros de rede, disponibilidade do servidor). Se o usuário mencionar ter visto uma mensagem de erro técnico, não confirme nem negue o estado do sistema, apenas oriente-o a tentar novamente e, se persistir, avise que pode reportar o problema pelo formulário de contato.
-5. Se a pergunta estiver claramente fora do escopo do Paflegis — ou seja, não estiver relacionada à Câmara Municipal de Pedro Afonso, matérias legislativas, normas jurídicas, sessões plenárias ou ao processo legislativo municipal — comece sua resposta com a tag exata [FORA_DO_ESCOPO] (sem espaço antes), explique brevemente o que você pode ajudar, mas não responda à pergunta fora de escopo com informações gerais. Exemplos de perguntas fora de escopo: receitas culinárias, esportes, entretenimento, saúde geral, questões jurídicas federais sem relação com a câmara, entre outros.`;
+5. Se a pergunta estiver claramente fora do escopo do Paflegis — ou seja, não estiver relacionada ao Legislativo de Pedro Afonso, matérias legislativas, normas jurídicas, sessões plenárias ou ao processo legislativo municipal — comece sua resposta com a tag exata [FORA_DO_ESCOPO] (sem espaço antes), explique brevemente o que você pode ajudar, mas não responda à pergunta fora de escopo com informações gerais. Exemplos de perguntas fora de escopo: receitas culinárias, esportes, entretenimento, saúde geral, questões jurídicas federais sem relação com o município, entre outros.
+6. FORMATO DE TEXTO: Responda ESTRITAMENTE em TEXTO PLANO PURO. NUNCA use formatação markdown de nenhum tipo: NÃO use asteriscos (* ou **), NÃO use sublinhados (__), NÃO use hashtags (#) para títulos, NÃO use divisórias (---) e NÃO use marcadores de lista com asterisco. Para listas ou enumerações, use numeração simples (1., 2., 3.) ou parágrafos curtos. Separe tópicos apenas com quebras de linha normais.
+7. Mantenha a resposta completa e conclusiva, sem interromper o raciocínio ou deixar frases incompletas.`;
 
     const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
@@ -336,68 +455,131 @@ DIRETRIZES DE CONVERSA:
     // Add the current user message
     contents.push({ role: 'user', parts: [{ text: message.trim() }] });
 
-    // Retry com backoff exponencial: até 2 tentativas adicionais ao receber 429 do Gemini.
-    let reply: string | undefined;
+    let rawReply: string | undefined;
     let lastErr: unknown;
-    for (let attempt = 0; attempt <= 2; attempt++) {
-      if (attempt > 0) await new Promise<void>(r => setTimeout(r, attempt * 2000)); // 2s, 4s
+
+    // Retry com backoff generoso e jitter (até 3 retentativas = 4 tentativas no total)
+    const retryDelays = [1000, 3000, 6000];
+
+    for (let attempt = 0; attempt <= 3; attempt++) {
+      if (attempt > 0) {
+        const jitter = Math.floor(Math.random() * 500);
+        const delayMs = retryDelays[attempt - 1] + jitter;
+        await new Promise<void>(r => setTimeout(r, delayMs));
+      }
+
       try {
         const response = await ai.models.generateContent({
-          model: 'gemini-2.0-flash',
+          model: 'gemini-3.5-flash',
           contents,
-          config: { systemInstruction, maxOutputTokens: 512, temperature: 0.7 },
+          config: { systemInstruction, maxOutputTokens: 2048, temperature: 0.6 },
         });
-        const rawReply = response.text?.trim() ?? 'Não consegui gerar uma resposta. Tente novamente.';
+
+        const candidate = response.candidates?.[0];
+        const finishReasonStr = String(candidate?.finishReason || '');
+        let generatedText = response.text?.trim() || candidate?.content?.parts?.[0]?.text?.trim() || '';
+
+        // Se a resposta foi interrompida por atingir o teto de tokens, tenta re-gerar uma vez com teto maior
+        if (finishReasonStr.toUpperCase().includes('MAX') && generatedText.length > 0) {
+          console.warn('[server.ts /api/chat] Resposta truncada por MAX_TOKENS. Tentando re-gerar com teto de 3072 tokens...');
+          try {
+            const retryResp = await ai.models.generateContent({
+              model: 'gemini-3.5-flash',
+              contents,
+              config: { systemInstruction, maxOutputTokens: 3072, temperature: 0.5 },
+            });
+            const retryText = retryResp.text?.trim() || retryResp.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+            if (retryText && retryText.length > generatedText.length) {
+              generatedText = retryText;
+            }
+          } catch (retryTokenErr) {
+            console.error('[server.ts /api/chat] Erro na tentativa de expandir tokens:', retryTokenErr);
+          }
+        }
+
+        // Se o texto não terminar com pontuação conclusiva (. ! ? :), apara no último ponto final completo
+        if (generatedText && !/[.!?:]$/.test(generatedText)) {
+          const lastPunct = Math.max(
+            generatedText.lastIndexOf('.'),
+            generatedText.lastIndexOf('!'),
+            generatedText.lastIndexOf('?')
+          );
+          if (lastPunct > 50) {
+            generatedText = generatedText.slice(0, lastPunct + 1);
+          }
+        }
+
+        if (!generatedText) {
+          generatedText = 'Não consegui gerar uma resposta completa. Por favor, tente novamente.';
+        }
+
         const outOfScopeTag = '[FORA_DO_ESCOPO]';
-        if (rawReply.startsWith(outOfScopeTag)) {
-          reply = rawReply.slice(outOfScopeTag.length).trimStart();
+        if (generatedText.startsWith(outOfScopeTag)) {
+          rawReply = generatedText.slice(outOfScopeTag.length).trimStart();
           (req as any)._outOfScope = true;
         } else {
-          reply = rawReply;
+          rawReply = generatedText;
         }
-        break;
+
+        break; // Sucesso na tentativa
       } catch (err: any) {
-        const isQuota =
-          err?.status === 429 || err?.code === 429 ||
-          (typeof err?.message === 'string' && (err.message.includes('429') || err.message.toUpperCase().includes('RESOURCE_EXHAUSTED')));
-        if (isQuota && attempt < 2) { lastErr = err; continue; }
+        lastErr = err;
+        const status = err?.status || err?.code;
+        const isQuota = status === 429 || (typeof err?.message === 'string' && (err.message.includes('429') || err.message.toUpperCase().includes('RESOURCE_EXHAUSTED')));
+
+        console.error(`[server.ts /api/chat Gemini Error] Tentativa ${attempt + 1}/4 falhou:`, {
+          status,
+          message: err?.message || String(err),
+          code: err?.code,
+          errorDetails: err?.errorDetails || err?.response?.data,
+          headers: err?.response?.headers || err?.headers,
+        });
+
+        if (isQuota && attempt < 3) {
+          continue;
+        }
         throw err;
       }
     }
-    if (reply !== undefined) return res.json({ reply, outOfScope: (req as any)._outOfScope === true });
+
+    if (rawReply !== undefined) {
+      // Sanitização de Markdown antes de entregar ao cliente
+      const cleanReply = stripMarkdown(rawReply);
+      return res.json({ reply: cleanReply, outOfScope: (req as any)._outOfScope === true });
+    }
+
     throw lastErr;
   } catch (err: any) {
-    console.error('[AI Chat] Erro ao chamar Gemini:', err?.message ?? err);
+    console.error('[server.ts /api/chat Fatal Error]', {
+      message: err?.message || String(err),
+      status: err?.status || err?.code,
+      stack: err?.stack,
+    });
 
-    // Detect quota / rate-limit errors from the Gemini SDK
-    const isRateLimit =
-      err?.status === 429 ||
-      err?.code === 429 ||
-      (typeof err?.message === 'string' &&
-        (err.message.includes('429') || err.message.toUpperCase().includes('RESOURCE_EXHAUSTED')));
+    const msg = String(err?.message || '');
+    const status = err?.status || err?.code;
+    const isRateLimit = status === 429 || msg.includes('429') || msg.toUpperCase().includes('RESOURCE_EXHAUSTED');
 
     if (isRateLimit) {
       return res.status(429).json({
-        error: 'Muitas solicitações agora. Por favor, tente novamente em instantes.',
+        error: 'Limite de cota de requisições excedido. Por favor, aguarde alguns instantes e tente novamente.',
       });
     }
 
-    // Detect network / service-unavailability errors (the AI backend is unreachable or returned 5xx)
-    const errMsg = typeof err?.message === 'string' ? err.message : '';
     const isServiceUnavailable =
       err?.status >= 500 ||
       err?.code >= 500 ||
-      errMsg.includes('503') ||
-      errMsg.includes('502') ||
-      errMsg.includes('500') ||
-      errMsg.toUpperCase().includes('SERVICE_UNAVAILABLE') ||
-      errMsg.toUpperCase().includes('UNAVAILABLE') ||
+      msg.includes('503') ||
+      msg.includes('502') ||
+      msg.includes('500') ||
+      msg.toUpperCase().includes('SERVICE_UNAVAILABLE') ||
+      msg.toUpperCase().includes('UNAVAILABLE') ||
       err?.code === 'ECONNREFUSED' ||
       err?.code === 'ENOTFOUND' ||
       err?.code === 'ETIMEDOUT' ||
       err?.code === 'ECONNRESET' ||
-      errMsg.includes('fetch failed') ||
-      errMsg.includes('network');
+      msg.includes('fetch failed') ||
+      msg.includes('network');
 
     if (isServiceUnavailable) {
       return res.status(503).json({
@@ -409,10 +591,16 @@ DIRETRIZES DE CONVERSA:
   }
 });
 
-// Servir Swagger UI estático (arquivos originais) em /api-docs
-app.use('/api-docs', express.static(path.join(process.cwd(), 'public', 'swagger-ui')));
-app.get('/api-docs', (_req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public', 'swagger-ui', 'index.html'));
+// Servir Swagger UI estático em /api-docs e /swagger-ui
+const swaggerUiDir = path.join(process.cwd(), 'public', 'swagger-ui');
+app.use('/api-docs', express.static(swaggerUiDir));
+app.use('/swagger-ui', express.static(swaggerUiDir));
+
+app.get(['/api-docs', '/api-docs/*', '/swagger-ui', '/swagger-ui/*'], (req, res, next) => {
+  if (path.extname(req.path)) {
+    return next();
+  }
+  res.sendFile(path.join(swaggerUiDir, 'index.html'));
 });
 
 // Servir JSON do OpenAPI
@@ -421,7 +609,7 @@ app.get('/api/openapi.json', (req, res) => {
 });
 
 // ── Contato (formulário) ──────────────────────────────────────────────────────
-app.post('/api/v1/contato', async (req, res) => {
+app.post(['/api/contato', '/api/v1/contato'], contatoRateLimiter, async (req, res) => {
   const { nome, email, assunto, mensagem, origem, _hp } = (req.body ?? {}) as Record<string, string>;
 
   // Honeypot: bots preenchem este campo; humanos não. Rejeitar silenciosamente.
@@ -446,8 +634,15 @@ app.post('/api/v1/contato', async (req, res) => {
       origem:   (origem || 'Contato').trim(),
     });
     res.json({ sucesso: true });
-  } catch (err) {
-    slog('WARN', 'contato', 'Falha ao enviar e-mail de contato', { err: String(err) });
+  } catch (err: any) {
+    const errorDetails = {
+      message: err?.message || String(err),
+      code: err?.code,
+      command: err?.command,
+      response: err?.response,
+    };
+    slog('WARN', 'contato', 'Falha ao enviar e-mail de contato via SMTP:', errorDetails);
+    console.error('[contato] Erro detalhado ao enviar e-mail via SMTP:', err);
     res.status(500).json({ sucesso: false, erro: 'Falha ao enviar e-mail. Tente novamente mais tarde.' });
   }
 });
@@ -959,6 +1154,8 @@ async function startServer() {
     slog('INFO', 'server', `Paflegis Server rodando na porta ${PORT}`);
     // Warm up the statistics cache so the first visitor gets instant data.
     refreshStatsCache();
+    // Inicia sincronização de metadados SEO em segundo plano
+    syncSaplSeo().catch(e => slog('WARN', 'startup-seo', 'Falha no sync inicial de SEO', e));
   });
 }
 
