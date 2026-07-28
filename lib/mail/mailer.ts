@@ -19,19 +19,21 @@ export interface EnvioParams {
   origem: string;
 }
 
-/** Valida presença das variáveis de e-mail na inicialização. Lança erro se ausentes. */
-export function validarConfigEmail(): void {
+/** Valida presença das variáveis de e-mail na inicialização e registra status nos logs. */
+export function validarConfigEmail(): boolean {
   const missing: string[] = [];
   if (!process.env.EMAIL_USER)         missing.push('EMAIL_USER');
   if (!process.env.EMAIL_APP_PASSWORD) missing.push('EMAIL_APP_PASSWORD');
   if (!process.env.EMAIL_DESTINO)      missing.push('EMAIL_DESTINO');
   if (missing.length > 0) {
-    throw new Error(
-      `[mailer] Variáveis de ambiente ausentes: ${missing.join(', ')}. ` +
-      'Configure-as no ambiente antes de iniciar o servidor. ' +
+    console.error(
+      `[ERROR] [mailer] Variáveis de ambiente ausentes para envio de e-mail SMTP: ${missing.join(', ')}. ` +
+      'O formulário de contato não enviará e-mails até que sejam configuradas. ' +
       'Consulte CONTATO_SETUP.md para instruções.'
     );
+    return false;
   }
+  return true;
 }
 
 /** Cria o transporter SMTP. Lança erro explícito se credenciais ausentes. */
