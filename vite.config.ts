@@ -12,8 +12,6 @@ export default defineConfig(() => {
       },
     },
     server: {
-      host: '0.0.0.0',
-      port: 3000,
       // HMR pode ser desabilitado via env var DISABLE_HMR=true (ex.: CI/CD ou ambientes sem suporte a WebSocket)
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
