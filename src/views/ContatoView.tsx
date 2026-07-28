@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Send, CheckCircle, AlertCircle, Loader2, RotateCcw } from 'lucide-react';
 import { consumeContatoOrigin } from '../lib/contatoNavStore';
+import { paflegisFetch } from '../lib/api/client';
 
 type Estado = 'idle' | 'enviando' | 'sucesso' | 'erro';
 
@@ -72,7 +73,7 @@ export const ContatoView: React.FC = () => {
     setEstado('enviando');
     setErroServidor('');
     try {
-      const res = await fetch('/api/v1/contato', {
+      const res = await paflegisFetch('/api/v1/contato', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

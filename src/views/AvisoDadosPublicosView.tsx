@@ -21,7 +21,7 @@ export const AvisoDadosPublicosView: React.FC<Props> = ({ onSelectTab }) => {
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2 text-blue-950 font-medium text-xs sm:text-sm">
           <p className="font-bold text-blue-900">Esclarecimento Importante sobre a Plataforma:</p>
           <p>
-            "Este aplicativo foi desenvolvido por <strong>Paflegis</strong> com o intuito exclusivo de facilitar e agilizar o acesso da população às informações legislativas públicas de Pedro Afonso - TO, disponibilizadas pelo SAPL. <strong>O Paflegis não é o Portal Oficial da Câmara Municipal nem de qualquer órgão governamental</strong> - trata-se de uma ferramenta cívica independente sem qualquer vínculo institucional com o Poder Público."
+            "Este aplicativo foi desenvolvido por <strong>Paflegis</strong> com o intuito exclusivo de facilitar e agilizar o acesso da população às informações legislativas públicas do município de Pedro Afonso - TO, disponibilizadas pelo SAPL. <strong>O Paflegis não é um portal oficial nem possui vínculo com qualquer órgão governamental</strong> - trata-se de uma ferramenta cívica independente sem qualquer afiliação institucional com o Poder Público."
           </p>
           <p>
             "O funcionamento do aplicativo fundamenta-se legalmente na Lei de Acesso à Informação (Lei nº 12.527/2011) e no fato de que a API disponibilizada pelo SAPL e os documentos legislativos nele contidos são de domínio público e de amplo interesse da sociedade."
@@ -31,7 +31,7 @@ export const AvisoDadosPublicosView: React.FC<Props> = ({ onSelectTab }) => {
         <section className="space-y-2">
           <h2 className="font-bold text-slate-900 text-base">Origem dos Dados e Integridade</h2>
           <p>
-            O Paflegis não altera, edita ou modifica o conteúdo substancial de nenhuma matéria legislativa, lei, ata ou norma jurídica. Todos os links de arquivos e PDFs disponibilizados ("Ver Original") apontam obrigatoriamente para o repositório público oficial mantido no domínio:
+            O Paflegis não altera, edita ou modifica o conteúdo substancial de nenhuma matéria legislativa, lei, ata ou norma jurídica. Todos os links de arquivos e PDFs disponibilizados ("Ver Documento") apontam obrigatoriamente para o repositório público oficial mantido no domínio:
           </p>
           <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl font-mono text-xs text-slate-800 break-all">
             https://sapl.pedroafonso.to.leg.br/

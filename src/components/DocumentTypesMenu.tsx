@@ -88,30 +88,30 @@ export const DocumentTypesMenu: React.FC<DocumentTypesMenuProps> = ({
   return (
     <div ref={containerRef} className="relative bg-slate-800 border-b border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-9 gap-3">
+        <div className="flex items-center h-10 sm:h-11 gap-3">
 
           {/* Botão trigger */}
           <button
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
             aria-haspopup="listbox"
-            className={`flex items-center gap-2 px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer min-h-[36px] ${
               open || anyTypeActive
                 ? 'bg-blue-600 text-white'
-                : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                : 'text-slate-200 hover:text-white hover:bg-slate-700'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
+            <Layers className="w-4 h-4" />
             <span>Documentos por Tipo</span>
             {loading ? (
-              <span className="w-3.5 h-3.5 rounded-full border-2 border-slate-500 border-t-white animate-spin" />
+              <span className="w-4 h-4 rounded-full border-2 border-slate-500 border-t-white animate-spin" />
             ) : (
               <>
-                <span className="bg-slate-700 text-slate-300 text-[10px] font-mono px-1.5 py-0.5 rounded-full">
+                <span className="bg-slate-700 text-slate-200 text-xs font-mono px-2 py-0.5 rounded-full font-bold">
                   {items.length}
                 </span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
                 />
               </>
             )}
@@ -119,7 +119,7 @@ export const DocumentTypesMenu: React.FC<DocumentTypesMenuProps> = ({
 
           {/* Breadcrumb do tipo ativo */}
           {anyTypeActive && activeItem && !open && (
-            <span className="hidden sm:block text-xs text-slate-400 truncate max-w-xs">
+            <span className="hidden sm:block text-xs sm:text-sm text-slate-300 font-medium truncate max-w-xs">
               / {activeItem.nome}
             </span>
           )}
@@ -134,22 +134,22 @@ export const DocumentTypesMenu: React.FC<DocumentTypesMenuProps> = ({
             {/* Cabeçalho do painel */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-blue-400" />
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                <FileText className="w-4 h-4 text-blue-400" />
+                <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                   Tipos de Documento — {items.length} disponíveis
                 </p>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="p-1 rounded text-slate-500 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
                 aria-label="Fechar menu"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {loading ? (
-              <div className="flex items-center gap-2 py-4 text-slate-400 text-xs">
+              <div className="flex items-center gap-2 py-4 text-slate-300 text-xs sm:text-sm">
                 <span className="w-4 h-4 rounded-full border-2 border-slate-600 border-t-slate-300 animate-spin" />
                 Carregando tipos do SAPL…
               </div>
@@ -159,10 +159,10 @@ export const DocumentTypesMenu: React.FC<DocumentTypesMenuProps> = ({
                   <button
                     key={item.tabId}
                     onClick={() => handleSelect(item.tabId)}
-                    className={`w-full break-inside-avoid text-left px-3 py-2 rounded-md text-xs transition-colors mb-0.5 ${
+                    className={`w-full break-inside-avoid text-left px-3.5 py-2.5 rounded-lg text-xs sm:text-sm transition-colors mb-1 cursor-pointer min-h-[40px] flex items-center ${
                       currentTab === item.tabId
                         ? 'bg-blue-600 text-white font-semibold'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        : 'text-slate-200 hover:bg-slate-800 hover:text-white'
                     }`}
                   >
                     {item.nome}

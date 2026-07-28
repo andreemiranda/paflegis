@@ -36,7 +36,7 @@ export const TermosDeUsoView: React.FC<Props> = ({ onSelectTab }) => (
           O <strong>Paflegis</strong> é um aplicativo cívico independente destinado à consulta e facilitação de acesso às informações legislativas públicas do Município de Pedro Afonso - TO, obtidas por meio da API pública do SAPL (Sistema de Apoio ao Processo Legislativo), nos termos da Lei nº 12.527/2011 (Lei de Acesso à Informação).
         </p>
         <p>
-          O Paflegis <strong>não é</strong> o portal oficial da Câmara Municipal de Pedro Afonso - TO, não possui vínculo com qualquer órgão governamental e não exerce função deliberativa, normativa ou oficial.
+          O Paflegis <strong>não é</strong> um portal oficial, não possui vínculo com órgãos governamentais e não exerce função deliberativa, normativa ou oficial.
         </p>
       </Sec>
 

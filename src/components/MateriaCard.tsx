@@ -52,7 +52,7 @@ export const MateriaCard: React.FC<MateriaCardProps> = ({ materia, onSelect }) =
       {/* Badge Header & Title */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2">
-          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold px-2 py-0.5 rounded">
+          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-md">
             {materia.tipo}
           </span>
           <span className="font-bold text-slate-900 text-xs sm:text-sm font-mono">
@@ -61,7 +61,7 @@ export const MateriaCard: React.FC<MateriaCardProps> = ({ materia, onSelect }) =
         </div>
 
         <span
-          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+          className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
             materia.situacao.includes('Aprovad') || materia.situacao.includes('Deferid')
               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
               : 'bg-amber-50 text-amber-800 border-amber-200'
@@ -79,41 +79,41 @@ export const MateriaCard: React.FC<MateriaCardProps> = ({ materia, onSelect }) =
       </div>
 
       {/* Metadata Row */}
-      <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500 pt-1">
-        <div className="flex items-center gap-1">
-          <User className="w-3.5 h-3.5 text-slate-400" />
+      <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs sm:text-sm text-slate-500 pt-1">
+        <div className="flex items-center gap-1.5">
+          <User className="w-4 h-4 text-slate-400 shrink-0" />
           <span className="font-semibold text-slate-700">{materia.autor}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <Calendar className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center gap-1.5">
+          <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
           <span>{formatDateBR(materia.data_apresentacao)}</span>
         </div>
       </div>
 
       {/* Main Document Quick Action Buttons */}
       <div className="pt-2 border-t border-slate-100 grid grid-cols-2 sm:flex sm:items-center gap-2">
-        {/* Botão 1: Ver Original */}
+        {/* Botão 1: Ver Documento */}
         {mainDocUrl ? (
           <a
             href={mainDocUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-md transition-colors shadow-xs"
+            className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg transition-colors shadow-xs cursor-pointer min-h-[40px]"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Ver Original</span>
+            <ExternalLink className="w-4 h-4" />
+            <span>Ver Documento</span>
           </a>
         ) : (
-          <span className="text-xs text-slate-400 italic">Sem texto original anexado</span>
+          <span className="text-xs sm:text-sm text-slate-400 italic">Sem texto original anexado</span>
         )}
 
         {/* Botão 2: Copiar Link */}
         {mainDocUrl && (
           <button
             onClick={handleCopyLink}
-            className="flex items-center justify-center gap-1.5 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs px-3.5 py-1.5 rounded-md transition-colors"
+            className="flex items-center justify-center gap-1.5 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg transition-colors cursor-pointer min-h-[40px]"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
             <span>{copied ? 'Copiado!' : 'Copiar Link'}</span>
           </button>
         )}
@@ -122,11 +122,11 @@ export const MateriaCard: React.FC<MateriaCardProps> = ({ materia, onSelect }) =
         {materia.documentos_acessorios && materia.documentos_acessorios.length > 0 && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="col-span-2 sm:col-span-1 sm:ml-auto flex items-center justify-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-md transition-colors"
+            className="col-span-2 sm:col-span-1 sm:ml-auto flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer min-h-[40px]"
           >
-            <Paperclip className="w-3.5 h-3.5" />
+            <Paperclip className="w-4 h-4 text-blue-600" />
             <span>{materia.documentos_acessorios.length} Anexo(s)</span>
-            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         )}
       </div>

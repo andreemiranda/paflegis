@@ -40,10 +40,14 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
               <li><button onClick={() => onSelectTab('normas')} className="hover:text-white transition-colors">Normas Jurídicas (Leis/Decretos)</button></li>
               <li><button onClick={() => onSelectTab('sessoes')} className="hover:text-white transition-colors">Sessões Plenárias e Atas</button></li>
               <li>
-                <a href="/api-docs" target="_blank" rel="noopener noreferrer" className="hover:text-amber-300 transition-colors font-medium text-amber-400 flex items-center gap-1">
-                  <Code2 className="w-3.5 h-3.5" /> Documentação da API
-                  <ExternalLink className="w-3 h-3 text-amber-400/80" />
-                </a>
+                <button onClick={() => onSelectTab('api-docs')} className="hover:text-amber-300 transition-colors font-medium text-amber-400 flex items-center gap-1 cursor-pointer">
+                  <Code2 className="w-3.5 h-3.5" /> Documentação da API (Swagger)
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onSelectTab('seo-audit')} className="hover:text-emerald-300 transition-colors font-medium text-emerald-400 flex items-center gap-1 cursor-pointer">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Auditoria de SEO & Metadados
+                </button>
               </li>
               <li>
                 <a href="https://github.com/andreemiranda/paflegis" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-1">
@@ -119,12 +123,12 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
         </div>
 
         {/* Aviso legal */}
-        <div className="my-5 p-3.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs text-slate-400 leading-relaxed space-y-1">
-          <p className="font-semibold text-slate-300 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-            <FileCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+        <div className="my-5 p-3.5 rounded-lg bg-slate-950/80 border border-slate-800 text-xs sm:text-sm text-slate-300 leading-relaxed space-y-1">
+          <p className="font-semibold text-slate-200 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+            <FileCheck className="w-4 h-4 text-emerald-400 shrink-0" />
             Aviso Legal e Natureza Independente:
           </p>
-          <p className="text-slate-400">
+          <p className="text-slate-300">
             "Este aplicativo foi desenvolvido por <strong>Paflegis</strong> utilizando dados públicos obtidos mediante a API aberta do SAPL. Os arquivos, leis e documentos são de domínio público e interesse de toda a sociedade (Lei nº 12.527/2011). Este aplicativo é uma ferramenta cívica independente e não se confunde com o portal governamental oficial."
           </p>
         </div>
@@ -137,18 +141,18 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
           <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="shrink-0">
             <img src="https://sapl.pedroafonso.to.leg.br/static/sapl/frontend/img/logo_cc.png" alt="Logo do Creative Commons BY SA" className="h-8 w-auto opacity-80 hover:opacity-100 transition-opacity" />
           </a>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
+          <p className="text-xs text-slate-400 leading-relaxed">
             Conteúdo e dados sob licença{' '}
-            <a href="https://creativecommons.org" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors">Creative Commons</a> 4.0
+            <a href="https://creativecommons.org" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-white transition-colors">Creative Commons</a> 4.0
             <br />
-            <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors">Atribuir Fonte - Compartilhar Igual</a>
+            <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-white transition-colors">Atribuir Fonte - Compartilhar Igual</a>
           </p>
         </div>
 
         {/* Bottom */}
-        <div className="grid grid-cols-3 items-center text-[10px] text-slate-500 uppercase tracking-widest font-medium pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center text-xs text-slate-400 uppercase tracking-wider font-medium pt-1">
           <div>
-            Desenvolvido por <strong className="text-slate-300 font-bold">Paflegis</strong> &copy; {new Date().getFullYear()}
+            Desenvolvido por <strong className="text-slate-200 font-bold">Paflegis</strong> &copy; {new Date().getFullYear()}
           </div>
           <div className="flex items-center justify-center gap-4">
             <div className="flex items-center gap-1.5">

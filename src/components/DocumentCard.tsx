@@ -9,7 +9,7 @@ import {
   Video,
 } from 'lucide-react';
 import { DocumentoAnexo } from '../types';
-import { copyToClipboard, shareUrl } from '../lib/urlUtils';
+import { copyToClipboard, shareUrl, normalizeDocumentUrl, getYouTubeVideoId, getYouTubeWatchUrl } from '../lib/urlUtils';
 import { formatDateBR } from '../lib/dateUtils';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { YouTubeModal } from './YouTubeModal';
@@ -24,10 +24,17 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ documento }) => {
   const [showYouTubeModal, setShowYouTubeModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const videoId = getYouTubeVideoId(documento.url);
   const isYouTubeUrl =
+    Boolean(videoId) ||
     documento.url.includes('youtube.com') ||
     documento.url.includes('youtu.be') ||
-    (documento.tipo && documento.tipo.toLowerCase().includes('vídeo'));
+    Boolean(documento.tipo && documento.tipo.toLowerCase().includes('vídeo'));
+
+  // Normaliza o link original de vídeo ou documento para ser aberto com segurança
+  const safeWatchUrl =
+    getYouTubeWatchUrl(documento.url) ||
+    normalizeDocumentUrl(documento.url);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -35,7 +42,9 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ documento }) => {
   };
 
   const handleCopyLink = async () => {
-    const success = await copyToClipboard(documento.url);
+    const targetUrl = safeWatchUrl || documento.url;
+    if (!targetUrl) return;
+    const success = await copyToClipboard(targetUrl);
     if (success) {
       setCopied(true);
       showToast('Link do documento copiado com sucesso!');
@@ -44,10 +53,12 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ documento }) => {
   };
 
   const handleShare = async () => {
+    const targetUrl = safeWatchUrl || documento.url;
+    if (!targetUrl) return;
     const success = await shareUrl(
       documento.nome,
       `Documento público do Paflegis - Pedro Afonso TO`,
-      documento.url
+      targetUrl
     );
     if (!success && !navigator.share) {
       await handleCopyLink();
@@ -86,8 +97,8 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ documento }) => {
               {documento.descricao}
             </p>
           )}
-          <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
-            {documento.tipo && <span className="bg-slate-200/80 text-slate-700 px-1.5 py-0.5 rounded">{documento.tipo}</span>}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-1">
+            {documento.tipo && <span className="bg-slate-200/80 text-slate-700 px-2 py-0.5 rounded font-medium">{documento.tipo}</span>}
             {documento.data && <span>• {formatDateBR(documento.data)}</span>}
             {documento.tamanho && <span>• {documento.tamanho}</span>}
           </div>
@@ -96,45 +107,45 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({ documento }) => {
 
       {/* Action Buttons Row */}
       <div className="flex flex-wrap items-center gap-2 pt-1">
-        {/* Botão 1: Ver Original */}
+        {/* Botão 1: Ver Documento */}
         <a
-          href={documento.url}
+          href={safeWatchUrl || documento.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 bg-[#4363bc] hover:bg-[#283c71] text-white font-bold text-xs px-3 py-2 rounded-lg transition-colors shadow-sm cursor-pointer"
+          className="flex items-center justify-center gap-1.5 bg-[#4363bc] hover:bg-[#283c71] text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition-colors shadow-sm cursor-pointer min-h-[40px]"
           title="Abrir documento original em nova guia"
         >
-          <ExternalLink className="w-3.5 h-3.5" />
-          <span>Ver Original</span>
+          <ExternalLink className="w-4 h-4" />
+          <span>Ver Documento</span>
         </a>
 
         {/* Botão 2: Copiar Link */}
         <button
           onClick={handleCopyLink}
-          className="flex items-center justify-center gap-1.5 border border-[#0ea5e9] text-[#0ea5e9] hover:bg-[#f0f9ff] font-bold text-xs px-3 py-2 rounded-lg transition-colors cursor-pointer"
+          className="flex items-center justify-center gap-1.5 border border-[#0ea5e9] text-[#0ea5e9] hover:bg-[#f0f9ff] font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer min-h-[40px]"
           title="Copiar link direto do documento"
         >
-          {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
           <span>{copied ? 'Copiado!' : 'Copiar Link'}</span>
         </button>
 
         {/* Botão 3: Visualizar / Assistir */}
         <button
           onClick={handleOpenPreview}
-          className="flex items-center justify-center gap-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs px-2.5 py-2 rounded-lg transition-colors"
+          className="flex items-center justify-center gap-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer min-h-[40px]"
           title={isYouTubeUrl ? "Assistir vídeo no app" : "Visualizar documento na tela"}
         >
-          {isYouTubeUrl ? <Video className="w-3.5 h-3.5 text-red-600" /> : <Eye className="w-3.5 h-3.5" />}
+          {isYouTubeUrl ? <Video className="w-4 h-4 text-red-600" /> : <Eye className="w-4 h-4" />}
           <span>{isYouTubeUrl ? 'Assistir' : 'Visualizar'}</span>
         </button>
 
         {/* Botão 4: Compartilhar */}
         <button
           onClick={handleShare}
-          className="flex items-center justify-center gap-1.5 border border-slate-300 hover:bg-slate-100 text-slate-600 font-semibold text-xs px-2.5 py-2 rounded-lg transition-colors"
+          className="flex items-center justify-center gap-1.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer min-h-[40px]"
           title="Compartilhar documento"
         >
-          <Share2 className="w-3.5 h-3.5" />
+          <Share2 className="w-4 h-4" />
           <span>Compartilhar</span>
         </button>
       </div>

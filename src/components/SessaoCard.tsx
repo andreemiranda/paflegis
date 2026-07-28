@@ -13,7 +13,7 @@ import {
   Youtube,
 } from 'lucide-react';
 import { SessaoPlenaria } from '../types';
-import { copyToClipboard } from '../lib/urlUtils';
+import { copyToClipboard, normalizeDocumentUrl, getYouTubeWatchUrl } from '../lib/urlUtils';
 import { formatDateBR } from '../lib/dateUtils';
 import { DocumentCard } from './DocumentCard';
 
@@ -29,10 +29,22 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
   const [expanded, setExpanded] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  const rawVideoUrl =
+    sessao.youtube_url?.trim() ||
+    sessao.anexos?.find(a => a.url && (a.url.includes('youtube') || a.url.includes('youtu.be') || a.url.includes('facebook') || (a.tipo && a.tipo.toLowerCase().includes('vídeo'))))?.url?.trim() || '';
+
+  const videoUrl = getYouTubeWatchUrl(rawVideoUrl) || rawVideoUrl;
+  const pautaUrl = normalizeDocumentUrl(sessao.pauta_url);
+  const ataUrl = normalizeDocumentUrl(sessao.ata_url);
+
+  const hasVideo = Boolean(videoUrl && videoUrl.length > 0);
+  const hasPauta = Boolean(pautaUrl && pautaUrl.length > 0);
+  const hasAta = Boolean(ataUrl && ataUrl.length > 0);
+
   const handleCopyPauta = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (sessao.pauta_url) {
-      const ok = await copyToClipboard(sessao.pauta_url);
+    if (pautaUrl) {
+      const ok = await copyToClipboard(pautaUrl);
       if (ok) {
         setCopiedPauta(true);
         setToastMsg('Link da Pauta copiado!');
@@ -44,8 +56,8 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
 
   const handleCopyAta = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (sessao.ata_url) {
-      const ok = await copyToClipboard(sessao.ata_url);
+    if (ataUrl) {
+      const ok = await copyToClipboard(ataUrl);
       if (ok) {
         setCopiedAta(true);
         setToastMsg('Link da Ata copiado!');
@@ -54,14 +66,6 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
       }
     }
   };
-
-  const videoUrl =
-    sessao.youtube_url?.trim() ||
-    sessao.anexos?.find(a => a.url && (a.url.includes('youtube') || a.url.includes('youtu.be') || a.url.includes('facebook') || (a.tipo && a.tipo.toLowerCase().includes('vídeo'))))?.url?.trim();
-
-  const hasVideo = Boolean(videoUrl && videoUrl.length > 0);
-  const hasPauta = Boolean(sessao.pauta_url && sessao.pauta_url.trim().length > 0);
-  const hasAta = Boolean(sessao.ata_url && sessao.ata_url.trim().length > 0);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 hover:shadow transition-all space-y-3 relative">
@@ -76,7 +80,7 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
         <div className="flex items-center gap-2">
-          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold px-2 py-0.5 rounded">
+          <span className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-md">
             {sessao.tipo}
           </span>
           <span className="font-bold text-slate-900 text-xs sm:text-sm font-mono">
@@ -85,7 +89,7 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
         </div>
 
         <span
-          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+          className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${
             sessao.situacao === 'Realizada'
               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
               : 'bg-amber-50 text-amber-800 border-amber-200'
@@ -97,16 +101,16 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
 
       {/* Date & Time */}
       <div onClick={() => onSelect && onSelect(sessao)} className="cursor-pointer space-y-1">
-        <h3 className="font-bold text-slate-900 text-xs sm:text-sm hover:text-blue-600 transition-colors">
+        <h3 className="font-bold text-slate-900 text-sm sm:text-base hover:text-blue-600 transition-colors">
           {sessao.tipo} nº {sessao.numero}/{sessao.ano}
         </h3>
-        <div className="flex items-center gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+        <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-500">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
             <span>Data: {formatDateBR(sessao.data)}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-slate-400 shrink-0" />
             <span>Horário: {sessao.horario}</span>
           </div>
         </div>
@@ -118,13 +122,13 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
         {hasVideo && (
           <button
             onClick={() => onOpenYouTube && onOpenYouTube(sessao)}
-            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs p-2 rounded-md flex items-center justify-between gap-2 shadow-xs transition-colors cursor-pointer"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm p-3 rounded-lg flex items-center justify-between gap-2 shadow-xs transition-colors cursor-pointer min-h-[44px]"
           >
             <div className="flex items-center gap-2">
-              <Youtube className="w-4 h-4 fill-white text-red-600 shrink-0" />
+              <Youtube className="w-5 h-5 fill-white text-red-600 shrink-0" />
               <span>Assistir Transmissão da Sessão</span>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-red-200 shrink-0" />
+            <ExternalLink className="w-4 h-4 text-red-200 shrink-0" />
           </button>
         )}
 
@@ -132,27 +136,27 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {/* Pauta */}
             {hasPauta && (
-              <div className="bg-slate-50 border border-slate-200 rounded-md p-2 flex items-center justify-between gap-2">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2 min-h-[44px]">
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                  <span className="text-xs font-semibold text-slate-800 truncate">Pauta da Sessão</span>
+                  <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-slate-800 truncate">Pauta da Sessão</span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <a
-                    href={sessao.pauta_url}
+                    href={pautaUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-blue-600 hover:bg-blue-500 text-white p-1 rounded transition-colors"
+                    className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-md transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
                     title="Ver Pauta da Sessão"
                   >
-                    <ExternalLink className="w-3 h-3" />
+                    <ExternalLink className="w-4 h-4" />
                   </a>
                   <button
                     onClick={handleCopyPauta}
-                    className="border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 p-1 rounded transition-colors"
+                    className="border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 p-2 rounded-md transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
                     title="Copiar Link da Pauta"
                   >
-                    {copiedPauta ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    {copiedPauta ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -160,27 +164,27 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
 
             {/* Ata */}
             {hasAta && (
-              <div className="bg-slate-50 border border-slate-200 rounded-md p-2 flex items-center justify-between gap-2">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2 min-h-[44px]">
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="text-xs font-semibold text-slate-800 truncate">Ata da Sessão</span>
+                  <FileText className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="text-xs sm:text-sm font-semibold text-slate-800 truncate">Ata da Sessão</span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <a
-                    href={sessao.ata_url}
+                    href={ataUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-blue-600 hover:bg-blue-500 text-white p-1 rounded transition-colors"
+                    className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-md transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
                     title="Ver Ata da Sessão"
                   >
-                    <ExternalLink className="w-3 h-3" />
+                    <ExternalLink className="w-4 h-4" />
                   </a>
                   <button
                     onClick={handleCopyAta}
-                    className="border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 p-1 rounded transition-colors"
+                    className="border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 p-2 rounded-md transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
                     title="Copiar Link da Ata"
                   >
-                    {copiedAta ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                    {copiedAta ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -189,7 +193,7 @@ export const SessaoCard: React.FC<SessaoCardProps> = ({ sessao, onSelect, onOpen
         )}
 
         {!hasVideo && !hasPauta && !hasAta && (
-          <div className="text-[11px] text-slate-400 italic py-0.5">
+          <div className="text-xs text-slate-400 italic py-1">
             Sem vídeo ou documentos (pauta/ata) cadastrados para esta sessão na API.
           </div>
         )}
