@@ -1,0 +1,367 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary: #2563eb;
+    --primary-light: #dbeafe;
+    --primary-lighter: #eff6ff;
+    --primary-dark: #1d4ed8;
+    --primary-darker: #1e293b;
+
+    --secondary: #475569;
+    --secondary-light: #94a3b8;
+    --secondary-lighter: #f1f5f9;
+    --secondary-dark: #334155;
+    --secondary-darker: #0f172a;
+    --secondary-foreground: #f8fafc;
+
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --surface: #ffffff;
+    --surface-border: #e2e8f0;
+    --destructive: #ef4444;
+
+    --font-scale: 1;
+  }
+
+  html, body {
+    font-size: calc(16px * var(--font-scale));
+    background-color: var(--background);
+    color: var(--foreground);
+    scroll-behavior: smooth;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* High Contrast Mode (WCAG 2.1) */
+  html.high-contrast {
+    --background: #000000;
+    --foreground: #ffffff;
+    --surface: #0a0a0a;
+    --surface-border: #ffffff;
+    --primary: #facc15;
+    --primary-light: #fef08a;
+    --primary-dark: #eab308;
+    --secondary: #38bdf8;
+    --secondary-light: #7dd3fc;
+    --secondary-dark: #0284c7;
+    color-scheme: dark;
+  }
+}
+
+/* High Contrast Mode Style Overrides */
+html.high-contrast,
+html.high-contrast body,
+html.high-contrast #root,
+html.high-contrast div.min-h-screen,
+html.high-contrast .bg-\[\#fafafa\] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Containers, Cards, Sections & Panels */
+html.high-contrast .bg-white,
+html.high-contrast .bg-slate-50,
+html.high-contrast .bg-slate-100,
+html.high-contrast .bg-slate-200,
+html.high-contrast .bg-slate-800,
+html.high-contrast .bg-slate-900,
+html.high-contrast .bg-slate-950,
+html.high-contrast .bg-gray-50,
+html.high-contrast .bg-gray-100,
+html.high-contrast .bg-blue-50,
+html.high-contrast .bg-blue-100,
+html.high-contrast .bg-sky-50,
+html.high-contrast .bg-sky-100,
+html.high-contrast .bg-amber-50,
+html.high-contrast .bg-amber-100,
+html.high-contrast .bg-emerald-50,
+html.high-contrast .bg-emerald-100,
+html.high-contrast .bg-red-50,
+html.high-contrast .bg-red-100,
+html.high-contrast .bg-purple-50,
+html.high-contrast .bg-indigo-50 {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+/* Translucent Overlays & Backdrop Modals */
+html.high-contrast .bg-slate-950\/70,
+html.high-contrast .bg-slate-950\/85,
+html.high-contrast .bg-slate-900\/60,
+html.high-contrast .bg-slate-900\/80,
+html.high-contrast .bg-black\/50,
+html.high-contrast .bg-black\/70 {
+  background-color: rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Modal Windows & Floating Boxes */
+html.high-contrast [role="dialog"],
+html.high-contrast .fixed.inset-0 > div,
+html.high-contrast .bg-white.rounded-2xl,
+html.high-contrast .bg-white.rounded-xl,
+html.high-contrast .bg-slate-900.rounded-2xl {
+  background-color: #000000 !important;
+  border: 2px solid #facc15 !important;
+  color: #ffffff !important;
+}
+
+/* Header, Navigation & Footer */
+html.high-contrast header,
+html.high-contrast footer,
+html.high-contrast nav,
+html.high-contrast .bg-slate-900 {
+  background-color: #000000 !important;
+  border-color: #ffffff !important;
+}
+
+/* Typography / Text Colors */
+html.high-contrast body,
+html.high-contrast p,
+html.high-contrast h1,
+html.high-contrast h2,
+html.high-contrast h3,
+html.high-contrast h4,
+html.high-contrast h5,
+html.high-contrast h6,
+html.high-contrast span,
+html.high-contrast div,
+html.high-contrast label,
+html.high-contrast li,
+html.high-contrast td,
+html.high-contrast th,
+html.high-contrast .text-slate-900,
+html.high-contrast .text-slate-800,
+html.high-contrast .text-slate-700,
+html.high-contrast .text-slate-600,
+html.high-contrast .text-slate-500,
+html.high-contrast .text-[#404040],
+html.high-contrast .text-gray-900,
+html.high-contrast .text-gray-800,
+html.high-contrast .text-gray-700,
+html.high-contrast .text-gray-600,
+html.high-contrast .text-gray-500 {
+  color: #ffffff !important;
+}
+
+/* Links & Primary Highlights */
+html.high-contrast .text-blue-600,
+html.high-contrast .text-blue-500,
+html.high-contrast .text-blue-400,
+html.high-contrast .text-blue-700,
+html.high-contrast .text-blue-800,
+html.high-contrast .text-sky-600,
+html.high-contrast .text-sky-500,
+html.high-contrast .text-sky-400,
+html.high-contrast .text-\[\#0ea5e9\],
+html.high-contrast .text-indigo-600,
+html.high-contrast .text-amber-600,
+html.high-contrast .text-amber-500,
+html.high-contrast .text-amber-400,
+html.high-contrast .text-emerald-600,
+html.high-contrast .text-emerald-500 {
+  color: #facc15 !important;
+}
+
+/* Muted / Secondary Descriptions */
+html.high-contrast .text-slate-400,
+html.high-contrast .text-slate-300,
+html.high-contrast .text-slate-200,
+html.high-contrast .text-slate-100,
+html.high-contrast .text-gray-400,
+html.high-contrast .text-gray-300 {
+  color: #f1f5f9 !important;
+}
+
+/* Borders in High Contrast */
+html.high-contrast .border,
+html.high-contrast .border-t,
+html.high-contrast .border-b,
+html.high-contrast .border-l,
+html.high-contrast .border-r,
+html.high-contrast .border-slate-100,
+html.high-contrast .border-slate-200,
+html.high-contrast .border-slate-300,
+html.high-contrast .border-slate-700,
+html.high-contrast .border-slate-800,
+html.high-contrast .border-gray-200,
+html.high-contrast .border-gray-300,
+html.high-contrast .border-blue-200,
+html.high-contrast .border-blue-500,
+html.high-contrast .border-blue-600,
+html.high-contrast .border-amber-200,
+html.high-contrast .border-emerald-200,
+html.high-contrast .border-red-200 {
+  border-color: #525252 !important;
+}
+
+/* Card & Box Outer Border Outline */
+html.high-contrast .rounded-xl,
+html.high-contrast .rounded-2xl,
+html.high-contrast .rounded-lg,
+html.high-contrast .shadow-sm,
+html.high-contrast .shadow-md,
+html.high-contrast .shadow-lg,
+html.high-contrast .shadow-xl,
+html.high-contrast .shadow-2xl {
+  border-color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* Form Controls (Inputs, Selects, Textareas) */
+html.high-contrast input,
+html.high-contrast select,
+html.high-contrast textarea {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #facc15 !important;
+}
+
+html.high-contrast input::placeholder,
+html.high-contrast textarea::placeholder {
+  color: #a3a3a3 !important;
+}
+
+/* Action Buttons (Primary) */
+html.high-contrast .bg-blue-600,
+html.high-contrast .bg-blue-700,
+html.high-contrast .bg-blue-500,
+html.high-contrast .bg-\[\#0ea5e9\],
+html.high-contrast button.bg-blue-600,
+html.high-contrast button.bg-blue-500,
+html.high-contrast button.bg-\[\#0ea5e9\] {
+  background-color: #facc15 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+  border: 1px solid #ffffff !important;
+}
+
+html.high-contrast .bg-blue-600 *,
+html.high-contrast .bg-blue-700 *,
+html.high-contrast .bg-blue-500 *,
+html.high-contrast button.bg-blue-600 *,
+html.high-contrast button.bg-blue-500 *,
+html.high-contrast button.bg-\[\#0ea5e9\] * {
+  color: #000000 !important;
+}
+
+/* Hover States for Primary Buttons */
+html.high-contrast .bg-blue-600:hover,
+html.high-contrast .bg-blue-500:hover,
+html.high-contrast button.bg-blue-600:hover,
+html.high-contrast button.bg-blue-500:hover {
+  background-color: #fef08a !important;
+  color: #000000 !important;
+}
+
+/* Badges / Chips / Pills */
+html.high-contrast .bg-blue-100,
+html.high-contrast .bg-emerald-100,
+html.high-contrast .bg-amber-100,
+html.high-contrast .bg-purple-100,
+html.high-contrast .bg-red-100,
+html.high-contrast .bg-slate-100,
+html.high-contrast .bg-slate-800 {
+  background-color: #171717 !important;
+  color: #facc15 !important;
+  border: 1px solid #facc15 !important;
+}
+
+/* Pre / Code Blocks */
+html.high-contrast pre,
+html.high-contrast code {
+  background-color: #000000 !important;
+  color: #38bdf8 !important;
+  border: 1px solid #525252 !important;
+}
+
+/* Tables in High Contrast */
+html.high-contrast table,
+html.high-contrast th,
+html.high-contrast td {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #737373 !important;
+}
+
+html.high-contrast tr:nth-child(even) {
+  background-color: #121212 !important;
+}
+
+/* Accessibility Top Bar in High Contrast */
+html.high-contrast .fixed.top-0.bg-slate-950 {
+  background-color: #000000 !important;
+  border-bottom: 2px solid #facc15 !important;
+}
+
+/* Custom scrollbars - High visibility styled with App Primary Blue (#2563eb) */
+html {
+  scrollbar-width: auto;
+  scrollbar-color: #2563eb #e2e8f0;
+}
+
+html.high-contrast {
+  scrollbar-color: #38bdf8 #1e293b;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-left: 1px solid #e2e8f0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 5px;
+  border: 2px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1d4ed8;
+}
+
+/* High contrast mode scrollbar */
+.high-contrast ::-webkit-scrollbar-track {
+  background: #0f172a;
+  border-left: 1px solid #334155;
+}
+
+.high-contrast ::-webkit-scrollbar-thumb {
+  background: #38bdf8;
+  border: 2px solid #0f172a;
+}
+
+.high-contrast ::-webkit-scrollbar-thumb:hover {
+  background: #0284c7;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* Focus Ring for Accessibility */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
