@@ -147,14 +147,21 @@ Deploy via blueprint: conecte o repositorio no Render e selecione "Apply Bluepri
 
 ---
 
-### Vercel (vercel.json)
+### Vercel (vercel.json & api/index.ts)
 
-O `vercel.json` serve o **frontend estatico** gerado em `dist/`. Rotas `/api/*` precisam de um backend rodando separadamente (ex.: Render), pois o Express nao executa na Vercel nessa configuracao.
+O Paflegis executa na Vercel utilizando **Vercel Serverless Functions** (`api/index.ts`) para rotas `/api/*` e o frontend estático compilado em `dist/`.
 
-Variaveis a configurar no painel da Vercel:
+#### Estratégia de Resiliência e Timeouts da API do SAPL:
+- **Fail-Fast com Timeout Curto**: Requisições para o SAPL externo têm timeout máximo de 4000ms e no máximo 1 retry curto de 500ms backoff, garantindo orçamento de tempo total < 6s (respeitando o limite de execução das Serverless Functions da Vercel).
+- **Cache Persistente & Fallback**: Em respostas bem-sucedidas do SAPL, os dados são armazenados na memória aquecida da função (`globalThis`) e gravados em `/tmp/paflegis_cache`. Caso o SAPL externo esteja lento ou fora do ar, o Paflegis responde HTTP 200 com os dados do cache ou com dados pré-semeados de segurança, impedindo telas de erro para o usuário.
+- **Logging Estruturado (`slog`)**: Todas as falhas e retentativas são registradas via JSON estruturado contendo contexto, endpoint, código HTTP e tempo decorrido.
+- **Diagnóstico `/v1/health`**: O endpoint de saúde responde status HTTP 200 com diagnóstico completo da latência e conectividade com o SAPL e Gemini.
+
+Variáveis a configurar no painel da Vercel (Settings > Environment Variables):
 
 ```
-GEMINI_API_KEY=...   # necessario apenas se o backend for hospedado na Vercel Functions
+GEMINI_API_KEY=...       # Chave da Google Gemini AI
+API_KEYS_PERMITIDAS=...  # Chaves de API permitidas separadas por vírgula para /api/v1/*
 NODE_ENV=production
 ```
 
