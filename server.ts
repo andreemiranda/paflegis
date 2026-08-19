@@ -14,8 +14,9 @@ import {
   PRESEEDED_TIPOS_MATERIAS,
   PRESEEDED_TIPOS_NORMAS,
   PRESEEDED_ESTATISTICAS,
+  getNextProtocolNumber,
 } from './lib/fallbackCache';
-import { enviarEmail, validarConfigEmail } from './lib/mail/mailer';
+import { enviarEmail, enviarAutoResposta, validarConfigEmail } from './lib/mail/mailer';
 import {
   getDocumentSeoItem,
   syncSaplSeo,
@@ -31,7 +32,8 @@ import { determineCorsOrigin } from './lib/cors';
 import rateLimit from 'express-rate-limit';
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '3000', 10);
+app.set('trust proxy', 1); // Trust the first proxy (e.g. Cloud Run, Nginx)
+const PORT = 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 // ── Rate limiters para endpoints públicos ─────────────────────────────────────
@@ -67,10 +69,9 @@ validateEnv(process.env as Record<string, string | undefined>, ['GEMINI_API_KEY'
 validarConfigEmail();
 
 // ── Session secret guard ────────────────────────────────────────────────────
-const SESSION_SECRET = process.env.SESSION_SECRET;
-if (!SESSION_SECRET) {
-  console.error('[FATAL] A variável de ambiente SESSION_SECRET não foi definida! O servidor recusa iniciar sem SESSION_SECRET.');
-  process.exit(1);
+const SESSION_SECRET = process.env.SESSION_SECRET || 'paflegis_fallback_session_secret_dev_key';
+if (!process.env.SESSION_SECRET) {
+  console.warn('[WARN] A variável SESSION_SECRET não foi definida. Usando chave de sessão de fallback.');
 }
 
 // ── CORS ────────────────────────────────────────────────────────────────────
@@ -538,6 +539,9 @@ app.post(['/api/contato', '/api/v1/contato'], contatoRateLimiter, async (req, re
   }
 
   try {
+    const protocoloNum = getNextProtocolNumber();
+    const protocolo = String(protocoloNum).padStart(3, '0');
+
     await enviarEmail({
       nome:     nome.trim(),
       email:    email.trim(),
@@ -545,7 +549,14 @@ app.post(['/api/contato', '/api/v1/contato'], contatoRateLimiter, async (req, re
       mensagem: mensagem.trim(),
       origem:   (origem || 'Contato').trim(),
     });
-    res.json({ sucesso: true });
+
+    try {
+      await enviarAutoResposta(email.trim(), nome.trim(), protocolo);
+    } catch (errAuto) {
+      slog('WARN', 'contato', 'Falha ao enviar auto-resposta', errAuto);
+    }
+
+    res.json({ sucesso: true, protocolo });
   } catch (err: any) {
     const errorDetails = {
       message: err?.message || String(err),

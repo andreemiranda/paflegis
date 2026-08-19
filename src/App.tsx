@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AppIntro } from './components/AppIntro';
 import { AIChatAssistant } from './components/AIChatAssistant';
 import { AccessibilityBar } from './components/AccessibilityBar';
 import { Header } from './components/Header';
@@ -126,6 +127,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] text-[#404040] selection:bg-[#bae6fd] selection:text-[#075985] pt-[48px] sm:pt-[42px] max-w-full w-full overflow-x-hidden">
+      <AppIntro onComplete={() => {}} />
+
       <AccessibilityBar
         onOpenAccessibilityModal={() => setAccessibilityModalOpen(true)}
         onOpenSitemapModal={() => setSitemapModalOpen(true)}

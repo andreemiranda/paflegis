@@ -152,16 +152,22 @@ Deploy via blueprint: conecte o repositorio no Render e selecione "Apply Bluepri
 O Paflegis executa na Vercel utilizando **Vercel Serverless Functions** (`api/index.ts`) para rotas `/api/*` e o frontend estático compilado em `dist/`.
 
 #### Estratégia de Resiliência e Timeouts da API do SAPL:
-- **Fail-Fast com Timeout Curto**: Requisições para o SAPL externo têm timeout máximo de 4000ms e no máximo 1 retry curto de 500ms backoff, garantindo orçamento de tempo total < 6s (respeitando o limite de execução das Serverless Functions da Vercel).
-- **Cache Persistente & Fallback**: Em respostas bem-sucedidas do SAPL, os dados são armazenados na memória aquecida da função (`globalThis`) e gravados em `/tmp/paflegis_cache`. Caso o SAPL externo esteja lento ou fora do ar, o Paflegis responde HTTP 200 com os dados do cache ou com dados pré-semeados de segurança, impedindo telas de erro para o usuário.
-- **Logging Estruturado (`slog`)**: Todas as falhas e retentativas são registradas via JSON estruturado contendo contexto, endpoint, código HTTP e tempo decorrido.
-- **Diagnóstico `/v1/health`**: O endpoint de saúde responde status HTTP 200 com diagnóstico completo da latência e conectividade com o SAPL e Gemini.
+- **Limites da Vercel**: No plano Hobby da Vercel, as funções têm limite estrito de 10 segundos. O `vercel.json` foi ajustado para considerar esse limite.
+- **Fail-Fast com Timeout Curto**: Requisições para o SAPL externo têm timeout máximo de 3000ms e no máximo 1 retry curto de 300ms backoff, garantindo orçamento de tempo total < 7s.
+- **Cache Persistente & Fallback**: Em respostas bem-sucedidas do SAPL, os dados são armazenados na memória aquecida da função (`globalThis`) e gravados em `/tmp/paflegis_cache`. Caso o SAPL externo esteja lento ou fora do ar, o Paflegis responde HTTP 200 com os dados do cache em /tmp. Se a Vercel estiver fazendo um Cold Start e o /tmp estiver vazio, o Paflegis tenta carregar um **fallback persistente (prefetch-fallback.json)** gerado em build-time.
+- **Logging Estruturado (`slog`)**: Todas as falhas e retentativas são registradas via JSON estruturado contendo contexto, endpoint, código HTTP e tempo decorrido, visualizáveis nos logs da Vercel.
+- **Diagnóstico `/v1/health`**: O endpoint de saúde responde status HTTP 200 com diagnóstico completo da latência, conectividade com o SAPL e Gemini.
 
-Variáveis a configurar no painel da Vercel (Settings > Environment Variables):
+Variáveis a configurar no painel da Vercel (Settings > Environment Variables) **para o ambiente de Production**:
 
 ```
 GEMINI_API_KEY=...       # Chave da Google Gemini AI
+EMAIL_USER=...           # E-mail Gmail que vai enviar mensagens de contato (ex: voce@gmail.com)
+EMAIL_APP_PASSWORD=...   # Senha de aplicativo de 16 dígitos gerada pelo Google 
+EMAIL_DESTINO=...        # E-mail que vai RECEBER os contatos dos usuários
+ALLOWED_ORIGINS=...      # Origem do front-end na vercel (ex: paflegis.vercel.app)
 API_KEYS_PERMITIDAS=...  # Chaves de API permitidas separadas por vírgula para /api/v1/*
+VITE_API_KEY=...         # Chave do front-end que faz par com API_KEYS_PERMITIDAS
 NODE_ENV=production
 ```
 

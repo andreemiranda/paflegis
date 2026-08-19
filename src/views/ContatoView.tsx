@@ -42,6 +42,7 @@ export const ContatoView: React.FC = () => {
   const [erros, setErros] = useState<Partial<Record<keyof FormData, string>>>({});
   const [estado, setEstado] = useState<Estado>('idle');
   const [erroServidor, setErroServidor] = useState('');
+  const [protocolo, setProtocolo] = useState('');
   const topoRef = useRef<HTMLDivElement>(null);
 
   // Rola para o topo quando a view é montada
@@ -78,8 +79,11 @@ export const ContatoView: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      const json = await res.json().catch(() => ({})) as { sucesso?: boolean; erro?: string; error?: string };
+      const json = await res.json().catch(() => ({})) as { sucesso?: boolean; erro?: string; error?: string; protocolo?: string };
       if (res.ok && json.sucesso) {
+        if (json.protocolo) {
+          setProtocolo(json.protocolo);
+        }
         setEstado('sucesso');
       } else {
         setErroServidor(json.erro || json.error || `Erro ao enviar mensagem (${res.status}). Tente novamente.`);
@@ -96,6 +100,7 @@ export const ContatoView: React.FC = () => {
     setErros({});
     setEstado('idle');
     setErroServidor('');
+    setProtocolo('');
   }
 
   const campo = (
@@ -174,6 +179,11 @@ export const ContatoView: React.FC = () => {
               <p className="text-sm text-slate-600">
                 Recebemos sua mensagem e responderemos em até 15 dias úteis.
               </p>
+              {protocolo && (
+                <p className="text-sm text-slate-600 font-bold mt-2">
+                  Protocolo de atendimento: {protocolo}
+                </p>
+              )}
             </div>
             <button
               onClick={reiniciar}

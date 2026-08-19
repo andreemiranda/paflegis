@@ -149,11 +149,11 @@ async function parseRequestBody(req: any): Promise<any> {
 }
 
 /** Fetch com timeout seguro (7000ms) e retentativa contra o SAPL. */
-async function safeFetch(url: string, ms = 7000, maxRetries = 2): Promise<Response> {
+async function safeFetch(url: string, ms = 3000, maxRetries = 1): Promise<Response> {
   let lastErr: unknown;
   const startTime = Date.now();
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    if (attempt > 0) await new Promise<void>(r => setTimeout(r, 600));
+    if (attempt > 0) await new Promise<void>(r => setTimeout(r, 300));
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(ms) });
       if (res.status >= 400 && res.status < 500) return res;
@@ -681,7 +681,12 @@ async function handleContato(body: any) {
 
   if (process.env.EMAIL_USER && process.env.EMAIL_APP_PASSWORD && process.env.EMAIL_DESTINO) {
     try {
-      const { enviarEmail } = await import('../lib/mail/mailer');
+      const { enviarEmail, enviarAutoResposta } = await import('../lib/mail/mailer');
+      const { getNextProtocolNumber } = await import('../lib/fallbackCache');
+      
+      const protocoloNum = getNextProtocolNumber();
+      const protocolo = String(protocoloNum).padStart(3, '0');
+
       await enviarEmail({
         nome:     nome.trim(),
         email:    email.trim(),
@@ -689,7 +694,15 @@ async function handleContato(body: any) {
         mensagem: mensagem.trim(),
         origem:   (origem || 'Contato').trim(),
       });
-      return { status: 200, data: { sucesso: true } };
+      
+      // Auto-resposta
+      try {
+        await enviarAutoResposta(email.trim(), nome.trim(), protocolo);
+      } catch (errAuto) {
+        slog('WARN', 'handleContato', 'Erro ao enviar auto-resposta', errAuto);
+      }
+
+      return { status: 200, data: { sucesso: true, protocolo } };
     } catch (err: any) {
       slog('ERROR', 'handleContato', 'Erro detalhado ao enviar e-mail via SMTP', {
         message: err?.message || String(err),

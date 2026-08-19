@@ -26,8 +26,8 @@ export function validarConfigEmail(): boolean {
   if (!process.env.EMAIL_APP_PASSWORD) missing.push('EMAIL_APP_PASSWORD');
   if (!process.env.EMAIL_DESTINO)      missing.push('EMAIL_DESTINO');
   if (missing.length > 0) {
-    console.error(
-      `[ERROR] [mailer] Variáveis de ambiente ausentes para envio de e-mail SMTP: ${missing.join(', ')}. ` +
+    console.warn(
+      `[WARN] [mailer] Variáveis de ambiente ausentes para envio de e-mail SMTP: ${missing.join(', ')}. ` +
       'O formulário de contato não enviará e-mails até que sejam configuradas. ' +
       'Consulte CONTATO_SETUP.md para instruções.'
     );
@@ -121,5 +121,51 @@ export async function enviarEmail(params: EnvioParams): Promise<void> {
     to: destino,
     subject: `[Paflegis · ${params.origem}] ${params.assunto}`,
     html: montarHtml(params),
+  });
+}
+
+/** Monta o HTML da auto-resposta. */
+function montarHtmlAutoResposta(nome: string, protocolo: string): string {
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  body { font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; }
+  .header { background: #1e293b; color: white; padding: 20px 24px; border-radius: 8px 8px 0 0; }
+  .header h1 { margin: 0; font-size: 18px; }
+  .body { background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px; font-size: 14px; line-height: 1.5; }
+  .highlight { font-weight: bold; color: #0f172a; }
+  .footer { margin-top: 16px; font-size: 11px; color: #94a3b8; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>Recebemos sua mensagem!</h1>
+  </div>
+  <div class="body">
+    <p>Olá, <span class="highlight">${esc(nome)}</span>.</p>
+    <p>Confirmamos o recebimento da sua mensagem pelo formulário de contato do Paflegis.</p>
+    <p>O número de protocolo do seu atendimento é: <span class="highlight">${esc(protocolo)}</span></p>
+    <p>Em breve, nossa equipe retornará o contato.</p>
+    <div class="footer">
+      Esta é uma mensagem automática. Por favor, não responda a este e-mail.
+    </div>
+  </div>
+</body>
+</html>`.trim();
+}
+
+/**
+ * Envia e-mail de auto-resposta ao usuário com número de protocolo.
+ */
+export async function enviarAutoResposta(emailUser: string, nomeUser: string, protocolo: string): Promise<void> {
+  const transporter = criarTransporter();
+  await transporter.sendMail({
+    from: `"Paflegis" <${process.env.EMAIL_USER}>`,
+    to: emailUser,
+    subject: `Recebemos sua mensagem - Protocolo ${protocolo}`,
+    html: montarHtmlAutoResposta(nomeUser, protocolo),
   });
 }

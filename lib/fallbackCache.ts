@@ -83,6 +83,25 @@ export function getPersistentCache<T>(key: string): { data: T; fetchedAt: number
     slog('WARN', 'fallback-cache', `Falha ao ler cache em /tmp para ${key}`, e);
   }
 
+  // 4. Último recurso: lê do prefetch de build-time (se existir)
+  try {
+    const prefetchFile = path.join(process.cwd(), 'dist', 'prefetch-fallback.json');
+    if (fs.existsSync(prefetchFile)) {
+      const raw = fs.readFileSync(prefetchFile, 'utf8');
+      const parsed = JSON.parse(raw);
+      let data = null;
+      if (key.startsWith('materias:') && parsed.materias) data = parsed.materias;
+      if (key.startsWith('normas:') && parsed.normas) data = parsed.normas;
+      if (key.startsWith('sessoes:') && parsed.sessoes) data = parsed.sessoes;
+      
+      if (data) {
+        return { data: data as T, fetchedAt: Date.now(), source: 'build-prefetch-fallback' };
+      }
+    }
+  } catch (e) {
+    slog('WARN', 'fallback-cache', `Falha ao ler prefetch-fallback.json`, e);
+  }
+
   return null;
 }
 
@@ -126,3 +145,44 @@ export const PRESEEDED_ESTATISTICAS = {
   atualizado_em: new Date().toISOString(),
   cache_age_s: 0,
 };
+
+export function getNextProtocolNumber(): number {
+  const PROTOCOL_KEY = 'contato:protocolo_counter';
+  let mem = memoryCacheStore.get(PROTOCOL_KEY);
+  let count = 0;
+  
+  if (mem) {
+    count = mem.data as number;
+  } else {
+    // try to read from /tmp
+    try {
+      const safeKey = PROTOCOL_KEY.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 100);
+      const filePath = path.join(TMP_CACHE_DIR, `${safeKey}.json`);
+      if (fs.existsSync(filePath)) {
+        const raw = fs.readFileSync(filePath, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.data === 'number') {
+          count = parsed.data;
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  count += 1;
+  memoryCacheStore.set(PROTOCOL_KEY, { data: count, fetchedAt: Date.now() });
+
+  try {
+    if (!fs.existsSync(TMP_CACHE_DIR)) {
+      fs.mkdirSync(TMP_CACHE_DIR, { recursive: true });
+    }
+    const safeKey = PROTOCOL_KEY.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 100);
+    const filePath = path.join(TMP_CACHE_DIR, `${safeKey}.json`);
+    fs.writeFileSync(filePath, JSON.stringify({ key: PROTOCOL_KEY, data: count, fetchedAt: Date.now() }), 'utf8');
+  } catch (e) {
+    // ignore
+  }
+
+  return count;
+}

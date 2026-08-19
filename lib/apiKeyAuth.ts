@@ -4,7 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 /**
  * Obtém o conjunto de chaves de API válidas a partir de variáveis de ambiente
@@ -116,12 +116,14 @@ export const apiRateLimiter = rateLimit({
   max: 120, // máximo de 120 requisições por janela por chave/IP
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false },
   keyGenerator: (req: Request) => {
     const key = extractApiKeyFromReq(req);
     if (key && typeof key === 'string' && key.trim()) {
       return `key:${key.trim()}`;
     }
-    return `ip:${req.ip || req.socket.remoteAddress || 'unknown'}`;
+    const clientIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    return `ip:${ipKeyGenerator(clientIp)}`;
   },
   handler: (_req: Request, res: Response) => {
     res.status(429).json({
