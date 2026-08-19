@@ -1,8 +1,8 @@
 # Paflegis
 
-Aplicativo civico independente de consulta as informacoes legislativas publicas do Municipio de Pedro Afonso - TO. Exibe materias legislativas, normas juridicas e sessoes plenarias obtidas via API publica do SAPL (Sistema de Apoio ao Processo Legislativo).
+Aplicativo cívico independente de consulta às informações legislativas públicas do Município de Pedro Afonso - TO. Exibe matérias legislativas, normas jurídicas e sessões plenárias obtidas via API pública do SAPL (Sistema de Apoio ao Processo Legislativo).
 
-> **Atencao:** o Paflegis nao e o portal oficial da Camara Municipal de Pedro Afonso - TO nem de qualquer orgao governamental. E uma ferramenta civica independente, sem vinculo institucional com o Poder Publico, fundamentada na Lei de Acesso a Informacao (Lei n. 12.527/2011).
+> **Atenção:** O Paflegis não é o portal oficial da Câmara Municipal de Pedro Afonso - TO nem de qualquer órgão governamental. É uma ferramenta cívica independente, sem vínculo institucional com o Poder Público, fundamentada na Lei de Acesso à Informação (Lei nº 12.527/2011).
 
 ---
 
@@ -11,216 +11,125 @@ Aplicativo civico independente de consulta as informacoes legislativas publicas 
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 19 + TypeScript + Vite + Tailwind CSS 4 |
-| Backend | Express (proxy/agregador da API publica do SAPL) |
+| Backend (Vercel) | Serverless Functions Node.js (`api/index.ts`) |
+| Backend (Local Dev) | Express (`server.ts`) |
 | IA (opcional) | Google Gemini via `@google/genai` |
-| Build | Vite (frontend) + esbuild (servidor) |
+| Build | Vite (frontend) + esbuild (servidor local) |
 
 ---
 
-## Estrutura do repositorio
+## Estrutura do Repositório
 
 ```
 paflegis/
 ├── src/                        # Frontend React + TypeScript
-│   ├── components/             # Componentes reutilizaveis (Header, Footer, modais, etc.)
-│   ├── lib/                    # Utilitarios: API SAPL, datas, URLs, consentimento LGPD, ads
-│   ├── views/                  # Paginas/abas da aplicacao
+│   ├── components/             # Componentes reutilizáveis (Header, Footer, modais, etc.)
+│   ├── lib/                    # Utilitários: API SAPL, datas, URLs, consentimento LGPD, ads
+│   ├── views/                  # Páginas/abas da aplicação
 │   └── types/                  # Tipos TypeScript globais
-├── public/                     # Ativos estaticos servidos diretamente
-│   ├── swagger-ui/             # Documentacao interativa da API REST
-│   └── images/                 # Logo e demais imagens publicas
-├── scripts/
-│   └── post-merge.sh           # Script executado apos merge de tarefas
-├── server.ts                   # Servidor Express: proxy SAPL + API Gemini + sessoes
+├── public/                     # Ativos estáticos servidos diretamente
+│   ├── swagger-ui/             # Documentação interativa da API REST
+│   └── images/                 # Logo e demais imagens públicas
+├── api/                        # Backend Serverless para Vercel
+│   └── index.ts                # Handler unificado de rotas /api/* na Vercel
+├── lib/                        # Módulos compartilhados de resiliência e backend
+│   ├── saplBackend.ts          # safeFetchWithRetry, checkSaplHealth e normalizadores
+│   └── fallbackCache.ts        # Cache resiliente em memória e disco (/tmp)
+├── server.ts                   # Servidor Express para desenvolvimento local
 ├── index.html                  # Entry point HTML (Vite)
-├── vite.config.ts
-├── tsconfig.json
+├── vite.config.ts              # Configuração do Vite
+├── tsconfig.json               # Configuração TypeScript
+├── vercel.json                 # Configuração de rotas e Serverless Functions na Vercel
 ├── package.json
-├── package-lock.json           # Lockfile npm (unico gerenciador de pacotes suportado)
-├── .env.example                # Variaveis de ambiente documentadas
-├── .node-version / .nvmrc      # Node 20
-├── Dockerfile                  # Build multi-stage para qualquer plataforma Docker
-├── heroku.yml                  # Deploy via container no Heroku
-├── Procfile                    # Deploy classico no Heroku (sem Docker)
-├── render.yaml                 # Blueprint de deploy no Render
-├── vercel.json                 # Configuracao de deploy no Vercel (frontend estatico)
-├── netlify.toml                # Configuracao de deploy no Netlify (frontend estatico)
-└── wrangler.toml               # Configuracao de deploy no Cloudflare Pages
+└── package-lock.json           # Lockfile npm (único gerenciador de pacotes suportado)
 ```
 
 ---
 
-## Como rodar localmente
+## Como Rodar Localmente
 
-### Pre-requisitos
+### Pré-requisitos
 
-- Node.js 20+ (versao definida em `.node-version` e `.nvmrc`)
+- Node.js 20+
 - Chave de API do Google Gemini (opcional — sem ela o assistente de IA fica desabilitado)
 
-### Instalacao
+### Instalação
 
 ```bash
-# 1. Clone o repositorio
+# 1. Clone o repositório
 git clone https://github.com/andreemiranda/paflegis.git
 cd paflegis
 
-# 2. Instale as dependencias (somente npm)
+# 2. Instale as dependências (somente npm)
 npm install
 
-# 3. Configure as variaveis de ambiente
+# 3. Configure as variáveis de ambiente
 cp .env.example .env.local
-# Edite .env.local e preencha ao menos GEMINI_API_KEY e SESSION_SECRET
+# Edite .env.local e preencha as variáveis desejadas
 
-# 4. Suba o servidor de desenvolvimento (Express + Vite na porta 5000)
+# 4. Suba o servidor de desenvolvimento
 npm run dev
 ```
 
-### Variaveis de ambiente
+### Variáveis de Ambiente
 
-| Variavel | Obrigatoria | Descricao |
+| Variável | Obrigatória | Descrição |
 |---|---|---|
 | `GEMINI_API_KEY` | Sim (para IA) | Chave da API do Google Gemini |
-| `SESSION_SECRET` | **Sim em producao** | String aleatoria longa (min. 32 chars). Gere com `openssl rand -base64 32` |
-| `NODE_ENV` | Recomendado | `production` em producao, `development` localmente |
-| `PORT` | Nao | Porta do servidor. Default: `5000`. Plataformas de cloud sobrescrevem automaticamente |
-| `ALLOWED_ORIGINS` | Nao | Origens CORS permitidas em producao (separadas por virgula). Vazio = same-origin |
-| `STATS_TTL_MS` | Nao | TTL do cache de estatisticas em ms. Default: `300000` (5 min) |
+| `SESSION_SECRET` | Sim (no servidor local) | String aleatória longa para assinatura de sessão |
+| `EMAIL_USER` | Opcional | E-mail Gmail que envia mensagens de contato via SMTP |
+| `EMAIL_APP_PASSWORD` | Opcional | Senha de aplicativo de 16 dígitos gerada pelo Google |
+| `EMAIL_DESTINO` | Opcional | E-mail que recebe as mensagens do formulário de contato |
+| `ALLOWED_ORIGINS` | Opcional | Origens CORS permitidas em produção (separadas por vírgula) |
+| `STATS_TTL_MS` | Opcional | TTL do cache de estatísticas em ms (padrão: 300000 = 5 min) |
+| `LIST_CACHE_TTL_MS` | Opcional | TTL do cache de listagens em ms (padrão: 180000 = 3 min) |
 
-### Scripts disponveis
+### Scripts Disponíveis
 
-| Comando | Descricao |
+| Comando | Descrição |
 |---|---|
-| `npm run dev` | Sobe Express + Vite em modo de desenvolvimento (HMR ativo) |
-| `npm run build` | Gera `dist/` com o frontend (Vite) e `dist/server.cjs` (esbuild) |
-| `npm run start` | Inicia o servidor de producao a partir de `dist/server.cjs` |
-| `npm run lint` | Checa erros de tipo TypeScript (`tsc --noEmit`) |
+| `npm run dev` | Inicia o servidor local de desenvolvimento |
+| `npm run build` | Compila o frontend (Vite) e o servidor (esbuild) |
+| `npm run start` | Inicia o servidor de produção compilado (`dist/server.cjs`) |
+| `npm run lint` | Valida erros de tipo TypeScript (`tsc --noEmit`) |
 
 ---
 
-## Deploy
+## Deploy em Produção (Vercel)
 
-### Docker (Dockerfile + heroku.yml)
+O Paflegis roda em produção na **Vercel** utilizando **Vercel Serverless Functions** (`api/index.ts`) para rotas `/api/*` e o frontend estático servido a partir de `dist/`.
 
-O `Dockerfile` usa build multi-stage: o stage `builder` compila o frontend e o servidor; o stage `runner` copia apenas os artefatos necessarios e roda com usuario nao-root.
+### Arquitetura de Resiliência do SAPL
 
-```bash
-# Build local
-docker build -t paflegis .
+- **Domínio Oficial**: Toda comunicação externa é realizada via HTTPS seguro com o domínio oficial `https://sapl.pedroafonso.to.leg.br/`.
+- **Prevenção de Timeout (Fail-Fast)**: Funções Serverless possuem limite estrito de execução (10 segundos no plano padrão). O helper `safeFetchWithRetry` utiliza timeout controlado (4000ms com 1 retry rápido de 300ms de backoff para listagens e detalhes; 3500ms sem retentativa para contagens/sub-recursos), prevenindo estouro do tempo de execução da função.
+- **Cache Resiliente**: Respostas do SAPL são armazenadas na memória da instância (`globalThis`) e persistidas em disco (`/tmp/paflegis_cache`). Caso o SAPL externo apresente lentidão momentânea, o Paflegis responde com dados de cache íntegros.
+- **Logging Estruturado (`slog`)**: Todas as requisições, retentativas e eventuais indisponibilidades do SAPL são registradas em formato JSON com contexto, endpoint e latência, facilitando o diagnóstico no painel de logs da Vercel.
+- **Health Check & Diagnóstico**: Endpoint `/api/v1/health` fornece diagnóstico em tempo real da conectividade e tempo de resposta do SAPL.
 
-# Rodar localmente
-docker run -p 5000:5000 \
-  -e GEMINI_API_KEY=sua_chave \
-  -e SESSION_SECRET=sua_string_secreta \
-  -e NODE_ENV=production \
-  paflegis
-```
-
-O `heroku.yml` aponta para o `Dockerfile`, permitindo deploy via container no Heroku.
-
----
-
-### Heroku (Procfile)
-
-O `Procfile` define `web: npm run start`. O Heroku injeta `PORT` automaticamente.
-
-Variaveis a configurar no painel (Settings > Config Vars):
-
-```
-GEMINI_API_KEY=...
-SESSION_SECRET=...
-NODE_ENV=production
-```
-
----
-
-### Render (render.yaml)
-
-O `render.yaml` configura um Web Service Node com:
-
-- `buildCommand: npm ci && npm run build`
-- `startCommand: npm run start`
-- Health check em `/api/stats`
-- `SESSION_SECRET` gerado automaticamente pelo Render
-- `GEMINI_API_KEY` deve ser preenchida manualmente no painel
-
-Deploy via blueprint: conecte o repositorio no Render e selecione "Apply Blueprint".
-
----
-
-### Vercel (vercel.json & api/index.ts)
-
-O Paflegis executa na Vercel utilizando **Vercel Serverless Functions** (`api/index.ts`) para rotas `/api/*` e o frontend estático compilado em `dist/`.
-
-#### Estratégia de Resiliência e Timeouts da API do SAPL:
-- **Limites da Vercel**: No plano Hobby da Vercel, as funções têm limite estrito de 10 segundos. O `vercel.json` foi ajustado para considerar esse limite.
-- **Fail-Fast com Timeout Curto**: Requisições para o SAPL externo têm timeout máximo de 3000ms e no máximo 1 retry curto de 300ms backoff, garantindo orçamento de tempo total < 7s.
-- **Cache Persistente & Fallback**: Em respostas bem-sucedidas do SAPL, os dados são armazenados na memória aquecida da função (`globalThis`) e gravados em `/tmp/paflegis_cache`. Caso o SAPL externo esteja lento ou fora do ar, o Paflegis responde HTTP 200 com os dados do cache em /tmp. Se a Vercel estiver fazendo um Cold Start e o /tmp estiver vazio, o Paflegis tenta carregar um **fallback persistente (prefetch-fallback.json)** gerado em build-time.
-- **Logging Estruturado (`slog`)**: Todas as falhas e retentativas são registradas via JSON estruturado contendo contexto, endpoint, código HTTP e tempo decorrido, visualizáveis nos logs da Vercel.
-- **Diagnóstico `/v1/health`**: O endpoint de saúde responde status HTTP 200 com diagnóstico completo da latência, conectividade com o SAPL e Gemini.
-
-Variáveis a configurar no painel da Vercel (Settings > Environment Variables) **para o ambiente de Production**:
+### Variáveis no Painel da Vercel (Settings > Environment Variables)
 
 ```
 GEMINI_API_KEY=...       # Chave da Google Gemini AI
-EMAIL_USER=...           # E-mail Gmail que vai enviar mensagens de contato (ex: voce@gmail.com)
-EMAIL_APP_PASSWORD=...   # Senha de aplicativo de 16 dígitos gerada pelo Google 
-EMAIL_DESTINO=...        # E-mail que vai RECEBER os contatos dos usuários
-ALLOWED_ORIGINS=...      # Origem do front-end na vercel (ex: paflegis.vercel.app)
-API_KEYS_PERMITIDAS=...  # Chaves de API permitidas separadas por vírgula para /api/v1/*
-VITE_API_KEY=...         # Chave do front-end que faz par com API_KEYS_PERMITIDAS
+EMAIL_USER=...           # E-mail Gmail de envio (ex: contato@exemplo.com)
+EMAIL_APP_PASSWORD=...   # Senha de aplicativo de 16 dígitos gerada no Google
+EMAIL_DESTINO=...        # E-mail que recebe os contatos enviados pelos usuários
+ALLOWED_ORIGINS=...      # Domínio frontend autorizado (ex: paflegis.vercel.app)
 NODE_ENV=production
 ```
 
 ---
 
-### Netlify (netlify.toml)
+## Conformidade Legal e Privacidade
 
-O `netlify.toml` faz publish do diretorio `dist/` com SPA fallback (`/* -> /index.html`). O backend Express **nao roda** no Netlify estatico.
-
-O arquivo ja traz um exemplo de redirect para o backend em `/api/*` apontando para uma instancia no Render. Substitua a URL pelo seu dominio real antes de publicar.
-
-Variaveis a configurar no painel do Netlify (Site Settings > Environment Variables):
-
-```
-NODE_ENV=production
-```
+- **LGPD (Lei nº 13.709/2018):** Política de privacidade, política de cookies, central de privacidade e formulário de exercício de direitos do titular implementados.
+- **LAI (Lei nº 12.527/2011):** Todos os dados legislativos exibidos são de domínio público, obtidos via API oficial do SAPL.
+- **Dados:** O Paflegis não coleta dados sensíveis. Preferências locais são armazenadas no navegador do usuário via `localStorage`.
 
 ---
 
-### Cloudflare Pages (wrangler.toml)
+## Licença
 
-O `wrangler.toml` configura o projeto para Cloudflare Pages com `pages_build_output_dir = "dist"` e compatibilidade com Node.js via `nodejs_compat`.
-
-```bash
-# Build local e deploy
-npm run build
-wrangler pages deploy dist --project-name=paflegis
-
-# Configurar secrets
-wrangler secret put GEMINI_API_KEY
-wrangler secret put SESSION_SECRET
-```
-
----
-
-## Gerenciador de pacotes
-
-Este projeto usa **exclusivamente npm**. O `bun.lock` foi removido intencionalmente porque estava desatualizado e causava instalacoes inconsistentes em plataformas de CI/CD. Nao adicione `bun.lock`, `yarn.lock` ou `pnpm-lock.yaml` ao repositorio.
-
----
-
-## Conformidade
-
-- **LGPD (Lei n. 13.709/2018):** politica de privacidade, politica de cookies, central de privacidade e formulario de direitos do titular implementados.
-- **LAI (Lei n. 12.527/2011):** todos os dados legislativos sao de dominio publico, obtidos via API oficial do SAPL.
-- **Dados:** o Paflegis nao coleta dados sensiveis. Preferencias sao armazenadas exclusivamente no `localStorage` do dispositivo do usuario.
-
----
-
-## Licenca
-
-Interface, codigo-fonte e textos originais: propriedade intelectual dos desenvolvedores do Paflegis (Lei n. 9.610/1998 e Lei n. 9.609/1998).
-
-Dados legislativos exibidos: dominio publico - orgao legislativo de Pedro Afonso - TO - reproduzidos com fundamento na LAI.
-
-Conteudo e dados via SAPL: [Creative Commons 4.0](https://creativecommons.org/licenses/by/4.0/) - Atribuir Fonte.
+- **Interface e código-fonte:** Propriedade intelectual dos desenvolvedores do Paflegis (Lei nº 9.610/1998 e Lei nº 9.609/1998).
+- **Dados legislativos:** Domínio público — Câmara Municipal de Pedro Afonso - TO — reproduzidos com fundamento na LAI.
+- **Conteúdo via SAPL:** [Creative Commons 4.0](https://creativecommons.org/licenses/by/4.0/) - Atribuir Fonte.

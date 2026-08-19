@@ -142,6 +142,25 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
       </section>
+
+      {error && !loading && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5 text-amber-900">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+            <p className="text-xs font-medium text-amber-800">
+              Não foi possível carregar as informações em tempo real no momento. Os atalhos continuam operacionais.
+            </p>
+          </div>
+          <button
+            onClick={() => setRetryCount(r => r + 1)}
+            className="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1.5 shrink-0 bg-amber-100 hover:bg-amber-200/80 px-3 py-1.5 rounded-md transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Atualizar</span>
+          </button>
+        </div>
+      )}
+
       {stats && (
         <section className="space-y-2">
           {(stats.fonte === 'sapl-live' || stats.fonte === 'disk-cache') && (() => {

@@ -155,6 +155,20 @@ export const SessoesView: React.FC<SessoesViewProps> = ({ initialSearch = '' }) 
 
       {loading ? (
         <SkeletonList count={2} />
+      ) : error ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-8 text-center space-y-3">
+          <AlertCircle className="w-8 h-8 text-amber-600 mx-auto" />
+          <h3 className="font-bold text-amber-900 text-sm">Não foi possível carregar as sessões plenárias</h3>
+          <p className="text-xs text-amber-700 max-w-md mx-auto">
+            O servidor do SAPL pode estar em manutenção ou com instabilidade momentânea. Tente novamente em instantes.
+          </p>
+          <button
+            onClick={() => setPagina(1)}
+            className="inline-block bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2 rounded-md transition-colors"
+          >
+            Tentar Novamente
+          </button>
+        </div>
       ) : sessoes.length === 0 ? (
         <div className="bg-white border border-slate-200 rounded-xl p-8 text-center space-y-2">
           <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />

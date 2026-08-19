@@ -29,16 +29,24 @@ export function validateEnv(env: Record<string, string | undefined>, required: s
 /**
  * Fetch com timeout explícito e retry leve de fail-fast.
  * - 4xx: retornado imediatamente (sem retry).
- * - 5xx / rede / timeout: retentado no máximo maxRetries vezes com backoff curto (500ms).
+ * - 5xx / rede / timeout: retentado no máximo maxRetries vezes com backoff curto (300ms a 500ms).
+ * 
+ * Por que 4000ms de timeout e no máximo 1 retry?
+ * - No runtime Serverless da Vercel (plano Hobby/Standard), o tempo limite máximo de execução
+ *   é estritamente 10 segundos (10.000ms).
+ * - Uma requisição com timeout de 4000ms + 1 retry de 4000ms + 500ms de backoff atinge no pior cenário
+ *   ~8500ms, deixando margem segura (~1500ms) para serialização JSON e envio da resposta HTTP
+ *   sem estourar o limite de 10s da Vercel.
  */
 export async function safeFetchWithRetry(
   url: string, timeoutMs = 4000, maxRetries = 1,
 ): Promise<Response> {
   let lastErr: unknown;
+  const startTime = Date.now();
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
-      await new Promise<void>(r => setTimeout(r, 500));
-      slog('INFO', 'sapl-retry', `Tentativa ${attempt + 1}/${maxRetries + 1}: ${url}`);
+      await new Promise<void>(r => setTimeout(r, 400));
+      slog('INFO', 'sapl-retry', `Tentativa ${attempt + 1}/${maxRetries + 1} (${Date.now() - startTime}ms): ${url}`);
     }
     try {
       const headers = {
@@ -53,10 +61,10 @@ export async function safeFetchWithRetry(
       if (res.status >= 400 && res.status < 500) return res; // 4xx: sem retry
       if (res.ok) return res;
       lastErr = new Error(`HTTP ${res.status}`);
-      slog('WARN', 'sapl-fetch', `Retornou HTTP ${res.status} na tentativa ${attempt + 1}: ${url}`);
+      slog('WARN', 'sapl-fetch', `Retornou HTTP ${res.status} na tentativa ${attempt + 1} (${Date.now() - startTime}ms): ${url}`);
     } catch (e) {
       lastErr = e;
-      slog('WARN', 'sapl-fetch', `Falha na tentativa ${attempt + 1}: ${url}`, e);
+      slog('WARN', 'sapl-fetch', `Falha na tentativa ${attempt + 1} (${Date.now() - startTime}ms): ${url}`, e);
     }
   }
   throw lastErr;

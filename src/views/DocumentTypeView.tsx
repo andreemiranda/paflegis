@@ -212,11 +212,16 @@ const BothSection: React.FC<{
 
 // ── Helpers de UI ─────────────────────────────────────────────────────────────
 const ErrorBanner: React.FC<{ kind: string }> = ({ kind }) => (
-  <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-    <p className="text-sm text-red-700">
-      Não foi possível carregar os {kind === 'norma' ? 'normas' : 'matérias'}. Tente novamente.
-    </p>
+  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+    <div>
+      <p className="text-sm font-medium text-amber-900">
+        Não foi possível carregar {kind === 'norma' ? 'as normas' : kind === 'materia' ? 'as matérias' : 'os documentos'}.
+      </p>
+      <p className="text-xs text-amber-700 mt-0.5">
+        O serviço pode estar processando uma requisição ou temporariamente instável. Tente novamente em alguns instantes.
+      </p>
+    </div>
   </div>
 );
 

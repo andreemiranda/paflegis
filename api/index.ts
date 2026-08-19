@@ -25,7 +25,18 @@ import { getGeminiApiKey } from '../lib/geminiKey';
 import { stripMarkdown } from '../lib/stripMarkdown';
 import { applyCorsHeaders } from '../lib/cors';
 import { getClientIp, checkRateLimit } from '../lib/rateLimiter';
-import { slog } from '../lib/saplBackend';
+import {
+  slog,
+  SAPL_API_BASE,
+  SAPL_PUBLIC_DOMAIN as SAPL_PUBLIC,
+  AUTOR_MAP,
+  extractAutor,
+  normalizeUrl,
+  dateBR,
+  brToTs,
+  safeFetchWithRetry,
+  checkSaplHealth,
+} from '../lib/saplBackend';
 import {
   setPersistentCache,
   getPersistentCache,
@@ -33,77 +44,6 @@ import {
   PRESEEDED_TIPOS_NORMAS,
   PRESEEDED_ESTATISTICAS,
 } from '../lib/fallbackCache';
-
-const SAPL_API_BASE = 'https://sapl.pedroafonso.to.leg.br/api';
-const SAPL_PUBLIC   = 'https://sapl.pedroafonso.to.leg.br';
-
-// Mapa de autores reais cadastrados no SAPL de Pedro Afonso (tipo=2: vereadores)
-const AUTOR_MAP: Record<number, string> = {
-  1:  'Marquim Catabriga',
-  2:  'Gislayson Lacerda',
-  3:  'Jader Mariano',
-  4:  'Joilson Boca Preta',
-  5:  'João do Povo',
-  6:  'Lili Benício',
-  7:  'Mirleyson Soares',
-  8:  'Sipriano Soares',
-  9:  'Breno Alves',
-  14: 'Agnaldo Lima',
-  15: 'José de Ribamar Coelho',
-  16: 'Fabrício Martins',
-  17: 'Antonio Neto',
-  18: 'Mirneuton Soares',
-  19: 'Pedro Belarmino',
-  20: 'Rômulo Soares',
-};
-
-function extractAutor(it: any): string {
-  const autorId = Array.isArray(it.autores) ? it.autores[0] : null;
-  if (autorId && AUTOR_MAP[autorId]) return AUTOR_MAP[autorId];
-  if (it.__str__) {
-    const m = String(it.__str__).match(/Ver\.\s+(.+?)\s+n[º°]/i);
-    if (m?.[1]) return m[1].trim();
-  }
-  return it.autor || 'Não informado';
-}
-
-// ── helpers ────────────────────────────────────────────────────────────────
-function normalizeUrl(raw?: string | null): string {
-  if (!raw) return '';
-  const s = raw.trim();
-  if (s.includes('youtube.com') || s.includes('youtu.be') || s.includes('vimeo.com')) return s;
-  if (s.startsWith('http://') || s.startsWith('https://')) {
-    try {
-      const u = new URL(s);
-      if (u.hostname.includes('sapl') || u.hostname.includes('pedroafonso') ||
-          /^\d+\.\d+\.\d+\.\d+$/.test(u.hostname) || u.hostname === 'localhost') {
-        return `${SAPL_PUBLIC}${u.pathname}${u.search}${u.hash}`;
-      }
-      return s;
-    } catch { return s; }
-  }
-  if (s.startsWith('/')) return `${SAPL_PUBLIC}${s}`;
-  return `${SAPL_PUBLIC}/${s}`;
-}
-
-function dateBR(d?: string | null): string {
-  if (!d) return '';
-  const s = d.trim();
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-  const p = new Date(s);
-  if (!isNaN(p.getTime()))
-    return `${String(p.getUTCDate()).padStart(2,'0')}/${String(p.getUTCMonth()+1).padStart(2,'0')}/${p.getUTCFullYear()}`;
-  return s;
-}
-
-function brToTs(d?: string | null): number {
-  if (!d) return 0;
-  const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if (m) return new Date(`${m[3]}-${m[2]}-${m[1]}`).getTime();
-  return new Date(d).getTime() || 0;
-}
 
 /** Garante o parsing seguro do corpo da requisição POST no runtime Serverless Vercel (Objeto, String, Buffer ou Stream). */
 async function parseRequestBody(req: any): Promise<any> {
@@ -148,69 +88,19 @@ async function parseRequestBody(req: any): Promise<any> {
   });
 }
 
-/** Fetch com timeout seguro (7000ms) e retentativa contra o SAPL. */
-async function safeFetch(url: string, ms = 3000, maxRetries = 1): Promise<Response> {
-  let lastErr: unknown;
-  const startTime = Date.now();
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    if (attempt > 0) await new Promise<void>(r => setTimeout(r, 300));
-    try {
-      const headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-      };
-      const res = await fetch(url, { headers, signal: AbortSignal.timeout(ms) });
-      if (res.status >= 400 && res.status < 500) return res;
-      if (res.ok) return res;
-      lastErr = new Error(`HTTP ${res.status}`);
-      slog('WARN', 'safeFetch', `Sapl retornou HTTP ${res.status} na tentativa ${attempt + 1}/${maxRetries + 1} (${Date.now() - startTime}ms): ${url}`);
-    } catch (e) {
-      lastErr = e;
-      slog('WARN', 'safeFetch', `Erro ao buscar URL (tentativa ${attempt + 1}/${maxRetries + 1}, ${Date.now() - startTime}ms): ${url}`, e);
-    }
-  }
-  throw lastErr;
-}
-
 async function handleHealth() {
-  const start = Date.now();
-  try {
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/json, text/plain, */*',
-      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-    };
-    const r = await fetch(`${SAPL_API_BASE}/materia/materialegislativa/?page_size=1`, { headers, signal: AbortSignal.timeout(3500) });
-    const latencyMs = Date.now() - start;
-    return {
-      status: 200,
-      data: {
-        status: r.ok ? 'ok' : 'degraded',
-        sapl: r.ok ? 'reachable' : 'unreachable',
-        sapl_http_code: r.status,
-        sapl_latency_ms: latencyMs,
-        gemini: getGeminiApiKey() ? 'configured' : 'not_configured',
-        env: process.env.NODE_ENV || 'production',
-        ts: new Date().toISOString(),
-      },
-    };
-  } catch (err: any) {
-    const latencyMs = Date.now() - start;
-    slog('WARN', 'handleHealth', `SAPL inalcançável em ${latencyMs}ms`, err);
-    return {
-      status: 200,
-      data: {
-        status: 'degraded',
-        sapl: 'unreachable',
-        sapl_latency_ms: latencyMs,
-        sapl_error: err?.message || String(err),
-        gemini: getGeminiApiKey() ? 'configured' : 'not_configured',
-        env: process.env.NODE_ENV || 'production',
-        ts: new Date().toISOString(),
-      },
-    };
-  }
+  const { reachable, latencyMs } = await checkSaplHealth();
+  return {
+    status: 200,
+    data: {
+      status: reachable ? 'ok' : 'degraded',
+      sapl: reachable ? 'reachable' : 'unreachable',
+      sapl_latency_ms: latencyMs,
+      gemini: getGeminiApiKey() ? 'configured' : 'not_configured',
+      env: process.env.NODE_ENV || 'production',
+      ts: new Date().toISOString(),
+    },
+  };
 }
 
 /** Busca todas as páginas de um endpoint paginado do SAPL e retorna o array completo. */
@@ -221,7 +111,7 @@ async function fetchAllPages(baseUrl: string): Promise<unknown[]> {
   while (url && pageCount < 5) {
     pageCount++;
     try {
-      const r = await safeFetch(url, 4000, 1);
+      const r = await safeFetchWithRetry(url, 4000, 1);
       if (!r.ok) break;
       const data = await r.json();
       const results: unknown[] = data.results || (Array.isArray(data) ? data : []);
@@ -298,7 +188,7 @@ async function handleMaterias(qs: Record<string,string|string[]>) {
   const cacheKey = `materias:${url.toString()}`;
 
   try {
-    const r = await safeFetch(url.toString(), 4000, 1);
+    const r = await safeFetchWithRetry(url.toString(), 4000, 1);
     if (r.ok) {
       const data  = await r.json();
       const items = (data.results || data).map((it: any) => ({
@@ -357,7 +247,7 @@ async function handleMateriaById(id: string) {
   const cacheKey = `materia_id:${id}`;
   const startMs = Date.now();
   try {
-    const r = await safeFetch(`${SAPL_API_BASE}/materia/materialegislativa/${id}/`, 4000, 1);
+    const r = await safeFetchWithRetry(`${SAPL_API_BASE}/materia/materialegislativa/${id}/`, 4000, 1);
     if (r.ok) {
       const it = await r.json();
       const payload = {
@@ -406,7 +296,7 @@ async function handleNormas(qs: Record<string,string|string[]>) {
   const cacheKey = `normas:${url.toString()}`;
 
   try {
-    const r = await safeFetch(url.toString(), 4000, 1);
+    const r = await safeFetchWithRetry(url.toString(), 4000, 1);
     if (r.ok) {
       const data  = await r.json();
       const items = (data.results || data).map((it: any) => ({
@@ -459,7 +349,7 @@ async function handleNormaById(id: string) {
   const cacheKey = `norma_id:${id}`;
   const startMs = Date.now();
   try {
-    const r = await safeFetch(`${SAPL_API_BASE}/norma/normajuridica/${id}/`, 4000, 1);
+    const r = await safeFetchWithRetry(`${SAPL_API_BASE}/norma/normajuridica/${id}/`, 4000, 1);
     if (r.ok) {
       const it = await r.json();
       const payload = {
@@ -521,7 +411,7 @@ async function handleSessoes(qs: Record<string,string|string[]>) {
   const cacheKey = `sessoes:${buildUrl(1)}:p${pageNum}:l${limitNum}`;
 
   try {
-    const first = await safeFetch(buildUrl(1), 4000, 1);
+    const first = await safeFetchWithRetry(buildUrl(1), 4000, 1);
     if (first.ok) {
       const fd         = await first.json();
       const totalE     = fd.pagination?.total_entries ?? fd.count ?? (fd.results||fd).length;
@@ -531,7 +421,7 @@ async function handleSessoes(qs: Record<string,string|string[]>) {
         const extraPages = Array.from({length: Math.min(totalPages - 1, 2)}, (_,i) => i + 2);
         const extra = await Promise.all(
           extraPages.map(p =>
-            safeFetch(buildUrl(p), 3500, 0).then(r=>r.ok?r.json():null).catch(err => {
+            safeFetchWithRetry(buildUrl(p), 3500, 0).then(r=>r.ok?r.json():null).catch(err => {
               slog('WARN', 'handleSessoes', `Falha ao buscar página extra ${p} de sessões`, err);
               return null;
             })
@@ -575,7 +465,7 @@ async function handleSessaoById(id: string) {
   const cacheKey = `sessao_id:${id}`;
   const startMs = Date.now();
   try {
-    const r = await safeFetch(`${SAPL_API_BASE}/sessao/sessaoplenaria/${id}/`, 4000, 1);
+    const r = await safeFetchWithRetry(`${SAPL_API_BASE}/sessao/sessaoplenaria/${id}/`, 4000, 1);
     if (r.ok) {
       const it  = await r.json();
       const d   = dateBR(it.data_inicio);
@@ -615,7 +505,7 @@ async function handleEstatisticas() {
 
   async function count(url: string): Promise<number> {
     try {
-      const r = await safeFetch(url, 3500, 0);
+      const r = await safeFetchWithRetry(url, 3500, 0);
       if (!r.ok) return 0;
       const d = await r.json();
       return d.count ?? d.pagination?.total_entries ?? (Array.isArray(d.results)?d.results.length:0);
@@ -639,8 +529,8 @@ async function handleEstatisticas() {
     let normasTipos:  {id:number;descricao:string}[] = [];
     try {
       const [mTRes, nTRes] = await Promise.all([
-        safeFetch(`${SAPL_API_BASE}/materia/tipomaterialegislativa/`, 3500, 0),
-        safeFetch(`${SAPL_API_BASE}/norma/tiponormajuridica/`,        3500, 0),
+        safeFetchWithRetry(`${SAPL_API_BASE}/materia/tipomaterialegislativa/`, 3500, 0),
+        safeFetchWithRetry(`${SAPL_API_BASE}/norma/tiponormajuridica/`,        3500, 0),
       ]);
       if (mTRes.ok) { const d=await mTRes.json(); materiaTipos=(d.results||d).map((t:any)=>({id:t.id,nome:t.descricao||t.sigla||''})); }
       if (nTRes.ok) { const d=await nTRes.json(); normasTipos=(d.results||d).map((t:any)=>({id:t.id,descricao:t.descricao||t.sigla||''})); }

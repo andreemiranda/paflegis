@@ -96,7 +96,7 @@ export async function getMaterias(
   params.set('limite', limit.toString());
 
   const res = await paflegisFetch(`/api/v1/materias?${params.toString()}`);
-  if (!res.ok) throw new Error(`SAPL indisponível para matérias (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Não foi possível carregar as matérias legislativas (HTTP ${res.status}).`);
   const data = await res.json();
   if (data && Array.isArray(data.items)) {
     return {
@@ -152,7 +152,7 @@ export async function getNormas(
   params.set('limite', limit.toString());
 
   const res = await paflegisFetch(`/api/v1/normas?${params.toString()}`);
-  if (!res.ok) throw new Error(`SAPL indisponível para normas (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Não foi possível carregar as normas jurídicas (HTTP ${res.status}).`);
   const data = await res.json();
   if (data && Array.isArray(data.items)) {
     return {
@@ -207,7 +207,7 @@ export async function getSessoes(
   params.set('limite', limit.toString());
 
   const res = await paflegisFetch(`/api/v1/sessoes?${params.toString()}`);
-  if (!res.ok) throw new Error(`SAPL indisponível para sessões (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Não foi possível carregar as sessões plenárias (HTTP ${res.status}).`);
   const data = await res.json();
   if (data && Array.isArray(data.items)) {
     return {
@@ -253,7 +253,7 @@ export async function getSessaoById(id: number | string): Promise<SessaoPlenaria
 // ── Estatísticas ─────────────────────────────────────────────────────────────
 export async function getEstatisticas(): Promise<EstatisticasLegislativas> {
   const res = await paflegisFetch('/api/v1/estatisticas');
-  if (!res.ok) throw new Error(`SAPL indisponível para estatísticas (HTTP ${res.status})`);
+  if (!res.ok) throw new Error(`Não foi possível carregar as estatísticas legislativas (HTTP ${res.status}).`);
   return await res.json();
 }
 
