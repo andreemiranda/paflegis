@@ -41,7 +41,15 @@ export async function safeFetchWithRetry(
       slog('INFO', 'sapl-retry', `Tentativa ${attempt + 1}/${maxRetries + 1}: ${url}`);
     }
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+      };
+      const res = await fetch(url, { 
+        headers,
+        signal: AbortSignal.timeout(timeoutMs) 
+      });
       if (res.status >= 400 && res.status < 500) return res; // 4xx: sem retry
       if (res.ok) return res;
       lastErr = new Error(`HTTP ${res.status}`);
@@ -116,9 +124,14 @@ export function brToTs(d: string | null | undefined): number {
 export async function checkSaplHealth(): Promise<{ reachable: boolean; latencyMs: number }> {
   const start = Date.now();
   try {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+    };
     const res = await fetch(
       `${SAPL_API_BASE}/materia/materialegislativa/?page_size=1`,
-      { signal: AbortSignal.timeout(5000) },
+      { headers, signal: AbortSignal.timeout(5000) },
     );
     return { reachable: res.ok, latencyMs: Date.now() - start };
   } catch {

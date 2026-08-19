@@ -155,7 +155,12 @@ async function safeFetch(url: string, ms = 3000, maxRetries = 1): Promise<Respon
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) await new Promise<void>(r => setTimeout(r, 300));
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(ms) });
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+      };
+      const res = await fetch(url, { headers, signal: AbortSignal.timeout(ms) });
       if (res.status >= 400 && res.status < 500) return res;
       if (res.ok) return res;
       lastErr = new Error(`HTTP ${res.status}`);
@@ -171,7 +176,12 @@ async function safeFetch(url: string, ms = 3000, maxRetries = 1): Promise<Respon
 async function handleHealth() {
   const start = Date.now();
   try {
-    const r = await fetch(`${SAPL_API_BASE}/materia/materialegislativa/?page_size=1`, { signal: AbortSignal.timeout(3500) });
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+    };
+    const r = await fetch(`${SAPL_API_BASE}/materia/materialegislativa/?page_size=1`, { headers, signal: AbortSignal.timeout(3500) });
     const latencyMs = Date.now() - start;
     return {
       status: 200,
