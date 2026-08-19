@@ -83,6 +83,7 @@ export interface TipoFiltro {
   id: number;
   sigla: string;
   nome: string;
+  descricao?: string;
 }
 
 export interface EstatisticasLegislativas {

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Landmark, Shield, FileText, Lock, Globe, ExternalLink, Map } from 'lucide-react';
+import { Landmark, ExternalLink, Map } from 'lucide-react';
 import SitemapModal from './SitemapModal';
 
 export default function Footer() {
@@ -10,7 +10,7 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="bg-dark text-white-50 pt-5 pb-4 mt-auto border-top border-secondary">
+      <footer className="bg-dark text-white-50 pt-5 pb-3 mt-auto border-top border-secondary">
         <div className="container">
           <div className="row g-4">
             {/* Coluna 1: Sobre o Projeto */}
@@ -24,8 +24,9 @@ export default function Footer() {
               <p className="small text-white-50 mb-3">
                 Plataforma cívica e independente para consulta e transparência das atividades legislativas da Câmara Municipal de Pedro Afonso - TO.
               </p>
-              <div className="alert alert-dark border-secondary p-2 small mb-0 text-white-50">
-                <strong>Nota de Independência:</strong> O Paflegis utiliza dados públicos oficiais e abertos. Não é um canal governamental ou oficial.
+              <div className="p-3 rounded-2 small text-light mb-0 border border-secondary border-opacity-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.25)' }}>
+                <strong className="text-white d-block mb-1">Nota de Independência:</strong>
+                <span className="text-white-50">O Paflegis utiliza dados públicos oficiais e abertos. Não é um canal governamental ou oficial.</span>
               </div>
             </div>
 
@@ -84,11 +85,12 @@ export default function Footer() {
             </div>
           </div>
 
-          <hr className="border-secondary my-4" />
+          <hr className="border-secondary mt-4 mb-3" />
 
-          <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small text-white-50">
+          {/* Links Auxiliares de Navegação do Rodapé */}
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small text-white-50 mb-3">
             <div>
-              &copy; {new Date().getFullYear()} Paflegis · Projeto de Código Aberto sob Licença MIT.
+              &copy; {new Date().getFullYear()} Paflegis · Informações Legislativas de Pedro Afonso - TO
             </div>
             <div className="d-flex gap-3">
               <Link href="/privacidade" className="text-white-50 text-decoration-none">Privacidade</Link>
@@ -96,6 +98,60 @@ export default function Footer() {
               <Link href="/termos" className="text-white-50 text-decoration-none">Termos</Link>
               <span>·</span>
               <Link href="/cookies" className="text-white-50 text-decoration-none">Cookies</Link>
+            </div>
+          </div>
+
+          {/* Última Linha na Parte Inferior do Rodapé: Mensagem e Imagens com Fundo Transparente */}
+          <div className="pt-3 border-top border-secondary border-opacity-50 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 text-center text-md-start">
+            <div className="small text-white-50">
+              Conteúdo e dados sob licença{' '}
+              <a
+                href="https://creativecommons.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-info text-decoration-none fw-semibold"
+              >
+                Creative Commons 4.0
+              </a>{' '}
+              <a
+                href="https://creativecommons.org/licenses/by/4.0/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-info text-decoration-none fw-semibold"
+              >
+                Atribuir Fonte - Compartilhar Igual
+              </a>
+            </div>
+
+            <div className="d-flex align-items-center gap-3 flex-shrink-0">
+              <a
+                href="http://www.interlegis.leg.br/"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Interlegis"
+                className="d-inline-flex align-items-center text-decoration-none"
+              >
+                <img
+                  src="https://sapl.pedroafonso.to.leg.br/static/sapl/frontend/img/logo_interlegis.png"
+                  alt="Interlegis"
+                  style={{ height: 26, width: 'auto', display: 'block' }}
+                  referrerPolicy="no-referrer"
+                />
+              </a>
+              <a
+                href="https://sapl.pedroafonso.to.leg.br/static/sapl/frontend/img/logo_cc.png"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Creative Commons"
+                className="d-inline-flex align-items-center text-decoration-none"
+              >
+                <img
+                  src="https://sapl.pedroafonso.to.leg.br/static/sapl/frontend/img/logo_cc.png"
+                  alt="Creative Commons"
+                  style={{ height: 26, width: 'auto', display: 'block' }}
+                  referrerPolicy="no-referrer"
+                />
+              </a>
             </div>
           </div>
         </div>

@@ -66,9 +66,11 @@ export default function HomePage() {
         <div className="container py-3">
           <div className="row align-items-center g-4">
             <div className="col-lg-8 mx-auto text-center">
-              <span className="badge bg-white bg-opacity-20 text-white mb-3 px-3 py-2 rounded-pill fw-semibold small">
-                Portal Cívico Independente de Pedro Afonso - TO
-              </span>
+              <div className="d-inline-flex align-items-center bg-white text-dark px-3.5 py-1.5 rounded-pill shadow-sm mb-3 border border-light">
+                <span className="fw-bold text-dark" style={{ fontSize: '0.86rem' }}>
+                  Portal Cívico Independente de Pedro Afonso - TO
+                </span>
+              </div>
               <h1 className="display-5 fw-bold mb-3">
                 Transparência e Consulta Legislativa Descomplicada
               </h1>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BookOpen, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
@@ -9,7 +9,7 @@ import NormaCard from '@/components/NormaCard';
 import Pagination from '@/components/Pagination';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal';
 
-export default function NormasPage() {
+function NormasContent() {
   const searchParams = useSearchParams();
 
   const [items, setItems] = useState<NormaJuridica[]>([]);
@@ -213,5 +213,20 @@ export default function NormasPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function NormasPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container py-5 text-center text-muted">
+          <RefreshCw size={28} className="spinner-border spinner-border-sm mx-auto mb-3 text-success" />
+          <p>Carregando legislação municipal...</p>
+        </div>
+      }
+    >
+      <NormasContent />
+    </Suspense>
   );
 }

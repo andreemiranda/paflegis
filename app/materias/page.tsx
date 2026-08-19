@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FileText, Search, Filter, RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
@@ -9,7 +9,7 @@ import MateriaCard from '@/components/MateriaCard';
 import Pagination from '@/components/Pagination';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal';
 
-export default function MateriasPage() {
+function MateriasContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -216,5 +216,20 @@ export default function MateriasPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function MateriasPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container py-5 text-center text-muted">
+          <RefreshCw size={28} className="spinner-border spinner-border-sm mx-auto mb-3 text-primary" />
+          <p>Carregando matérias legislativas...</p>
+        </div>
+      }
+    >
+      <MateriasContent />
+    </Suspense>
   );
 }

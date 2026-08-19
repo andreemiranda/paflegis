@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Video, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
@@ -10,7 +10,7 @@ import Pagination from '@/components/Pagination';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal';
 import YouTubeModal from '@/components/YouTubeModal';
 
-export default function SessoesPage() {
+function SessoesContent() {
   const searchParams = useSearchParams();
 
   const [items, setItems] = useState<SessaoPlenaria[]>([]);
@@ -198,5 +198,20 @@ export default function SessoesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function SessoesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container py-5 text-center text-muted">
+          <RefreshCw size={28} className="spinner-border spinner-border-sm mx-auto mb-3 text-danger" />
+          <p>Carregando sessões plenárias...</p>
+        </div>
+      }
+    >
+      <SessoesContent />
+    </Suspense>
   );
 }
