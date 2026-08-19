@@ -2,46 +2,64 @@
 
 Aplicativo cívico independente de consulta às informações legislativas públicas do Município de Pedro Afonso - TO. Exibe matérias legislativas, normas jurídicas e sessões plenárias obtidas via API pública do SAPL (Sistema de Apoio ao Processo Legislativo).
 
-> **Atenção:** O Paflegis não é o portal oficial da Câmara Municipal de Pedro Afonso - TO nem de qualquer órgão governamental. É uma ferramenta cívica independente, sem vínculo institucional com o Poder Público, fundamentada na Lei de Acesso à Informação (Lei nº 12.527/2011).
+> **Atenção:** O Paflegis não é o portal oficial da Câmara Municipal de Pedro Afonso - TO nem de qualquer órgão governamental. É uma iniciativa cívica independente, sem vínculo institucional com o Poder Público, fundamentada na Lei de Acesso à Informação (Lei Federal nº 12.527/2011).
 
 ---
 
-## Stack
+## Stack Tecnológica
 
 | Camada | Tecnologia |
 |---|---|
-| Frontend | React 19 + TypeScript + Vite + Tailwind CSS 4 |
-| Backend (Vercel) | Serverless Functions Node.js (`api/index.ts`) |
-| Backend (Local Dev) | Express (`server.ts`) |
-| IA (opcional) | Google Gemini via `@google/genai` |
-| Build | Vite (frontend) + esbuild (servidor local) |
+| Framework Full-Stack | Next.js (App Router) |
+| Linguagem | TypeScript & React |
+| Estilização | Bootstrap 5 + Lucide Icons |
+| Backend & API | Route Handlers Nativos (`app/api/v1/*`) |
+| IA Cívica | Google Gemini via `@google/genai` |
+| Hospedagem & Deploy | Vercel (Next.js Serverless Platform) |
 
 ---
 
-## Estrutura do Repositório
+## Estrutura do Projeto
 
 ```
 paflegis/
-├── src/                        # Frontend React + TypeScript
-│   ├── components/             # Componentes reutilizáveis (Header, Footer, modais, etc.)
-│   ├── lib/                    # Utilitários: API SAPL, datas, URLs, consentimento LGPD, ads
-│   ├── views/                  # Páginas/abas da aplicação
-│   └── types/                  # Tipos TypeScript globais
-├── public/                     # Ativos estáticos servidos diretamente
-│   ├── swagger-ui/             # Documentação interativa da API REST
-│   └── images/                 # Logo e demais imagens públicas
-├── api/                        # Backend Serverless para Vercel
-│   └── index.ts                # Handler unificado de rotas /api/* na Vercel
-├── lib/                        # Módulos compartilhados de resiliência e backend
-│   ├── saplBackend.ts          # safeFetchWithRetry, checkSaplHealth e normalizadores
-│   └── fallbackCache.ts        # Cache resiliente em memória e disco (/tmp)
-├── server.ts                   # Servidor Express para desenvolvimento local
-├── index.html                  # Entry point HTML (Vite)
-├── vite.config.ts              # Configuração do Vite
-├── tsconfig.json               # Configuração TypeScript
-├── vercel.json                 # Configuração de rotas e Serverless Functions na Vercel
-├── package.json
-└── package-lock.json           # Lockfile npm (único gerenciador de pacotes suportado)
+├── app/                        # Next.js App Router (Páginas e Route Handlers)
+│   ├── api/v1/                 # Endpoints REST normalizados
+│   │   ├── materias/           # Rotas de listagem e detalhe de matérias
+│   │   ├── normas/             # Rotas de listagem e detalhe de normas
+│   │   ├── sessoes/            # Rotas de listagem e detalhe de sessões
+│   │   ├── estatisticas/       # Totais consolidados do município
+│   │   ├── health/             # Diagnóstico de integridade e latência
+│   │   ├── contato/            # Envio de formulário com protocolo
+│   │   ├── chat/               # Assistente de IA com Google Gemini
+│   │   ├── openapi.json/       # Especificação OpenAPI 3.0
+│   │   └── seo-audit/          # Monitoramento de SEO e conexões
+│   ├── materias/               # Páginas de listagem e detalhe de matérias
+│   ├── normas/                 # Páginas de legislação municipal
+│   ├── sessoes/                # Páginas de sessões plenárias e vídeos
+│   ├── sobre/                  # Informações sobre o projeto cívico
+│   ├── contato/                # Formulário de contato e suporte
+│   ├── api-docs/               # Documentação interativa e cURL snippets
+│   ├── privacidade/            # Política de Privacidade e Central LGPD
+│   ├── cookies/                # Política de Cookies
+│   ├── termos/                 # Termos de Uso
+│   ├── aviso-legal/            # Isenção de responsabilidade oficial
+│   ├── dados-publicos/         # Licenciamento e abertura de dados
+│   ├── layout.tsx              # Layout mestre com acessibilidade e navegação
+│   ├── page.tsx                # Dashboard inicial e busca rápida
+│   ├── sitemap.ts              # Sitemap XML dinâmico
+│   └── robots.ts               # Configuração de robôs e indexação
+├── components/                 # Componentes reutilizáveis (Header, Footer, Cards, Modais)
+├── lib/                        # Módulos de infraestrutura e lógica compartilhada
+│   ├── sapl/                   # Conector SAPL e cache com fallback de resiliência
+│   ├── auth/                   # Validação de API keys com bypass para same-origin
+│   ├── gemini/                 # Cliente de Inteligência Artificial Google Gemini
+│   ├── mail/                   # Disparo de e-mails via Nodemailer
+│   └── rateLimiter.ts          # Controle de taxa de requisições
+├── public/                     # Ativos estáticos públicos (logos, imagens, manifests)
+├── types/                      # Definições de tipos TypeScript globais
+├── next.config.mjs             # Configuração do Next.js
+└── package.json                # Dependências e scripts do projeto
 ```
 
 ---
@@ -51,7 +69,7 @@ paflegis/
 ### Pré-requisitos
 
 - Node.js 20+
-- Chave de API do Google Gemini (opcional — sem ela o assistente de IA fica desabilitado)
+- Chave de API do Google Gemini (opcional, para o assistente de IA)
 
 ### Instalação
 
@@ -65,58 +83,43 @@ npm install
 
 # 3. Configure as variáveis de ambiente
 cp .env.example .env.local
-# Edite .env.local e preencha as variáveis desejadas
+# Edite .env.local e adicione sua chave GEMINI_API_KEY (opcional)
 
-# 4. Suba o servidor de desenvolvimento
+# 4. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-### Variáveis de Ambiente
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
+
+---
+
+## Variáveis de Ambiente
 
 | Variável | Obrigatória | Descrição |
 |---|---|---|
 | `GEMINI_API_KEY` | Sim (para IA) | Chave da API do Google Gemini |
-| `SESSION_SECRET` | Sim (no servidor local) | String aleatória longa para assinatura de sessão |
+| `API_KEYS` | Opcional | Chaves autorizadas de parceiros externos (separadas por vírgula) |
 | `EMAIL_USER` | Opcional | E-mail Gmail que envia mensagens de contato via SMTP |
-| `EMAIL_APP_PASSWORD` | Opcional | Senha de aplicativo de 16 dígitos gerada pelo Google |
-| `EMAIL_DESTINO` | Opcional | E-mail que recebe as mensagens do formulário de contato |
-| `ALLOWED_ORIGINS` | Opcional | Origens CORS permitidas em produção (separadas por vírgula) |
-| `STATS_TTL_MS` | Opcional | TTL do cache de estatísticas em ms (padrão: 300000 = 5 min) |
-| `LIST_CACHE_TTL_MS` | Opcional | TTL do cache de listagens em ms (padrão: 180000 = 3 min) |
+| `EMAIL_APP_PASSWORD` | Opcional | Senha de aplicativo de 16 dígitos gerada no Google |
+| `EMAIL_DESTINO` | Opcional | E-mail que recebe as mensagens do formulário |
 
-### Scripts Disponíveis
+---
 
-| Comando | Descrição |
-|---|---|
-| `npm run dev` | Inicia o servidor local de desenvolvimento |
-| `npm run build` | Compila o frontend (Vite) e o servidor (esbuild) |
-| `npm run start` | Inicia o servidor de produção compilado (`dist/server.cjs`) |
-| `npm run lint` | Valida erros de tipo TypeScript (`tsc --noEmit`) |
+## Autenticação e Consumo da API
+
+- **Navegação no Portal (Mesma Origem):** As requisições originadas pelo próprio frontend passam automaticamente pelo gate de autenticação (`same-origin`), garantindo transparência total sem necessidade de login.
+- **Aplicações e Parceiros Externos:** Requisições de terceiros para `/api/v1/*` requerem o cabeçalho `x-api-key`. Chaves gratuitas podem ser solicitadas através do canal de contato do portal.
 
 ---
 
 ## Deploy em Produção (Vercel)
 
-O Paflegis roda em produção na **Vercel** utilizando **Vercel Serverless Functions** (`api/index.ts`) para rotas `/api/*` e o frontend estático servido a partir de `dist/`.
+O projeto foi estruturado para deploy contínuo e sem fricção na **Vercel**:
 
-### Arquitetura de Resiliência do SAPL
-
-- **Domínio Oficial**: Toda comunicação externa é realizada via HTTPS seguro com o domínio oficial `https://sapl.pedroafonso.to.leg.br/`.
-- **Prevenção de Timeout (Fail-Fast)**: Funções Serverless possuem limite estrito de execução (10 segundos no plano padrão). O helper `safeFetchWithRetry` utiliza timeout controlado (4000ms com 1 retry rápido de 300ms de backoff para listagens e detalhes; 3500ms sem retentativa para contagens/sub-recursos), prevenindo estouro do tempo de execução da função.
-- **Cache Resiliente**: Respostas do SAPL são armazenadas na memória da instância (`globalThis`) e persistidas em disco (`/tmp/paflegis_cache`). Caso o SAPL externo apresente lentidão momentânea, o Paflegis responde com dados de cache íntegros.
-- **Logging Estruturado (`slog`)**: Todas as requisições, retentativas e eventuais indisponibilidades do SAPL são registradas em formato JSON com contexto, endpoint e latência, facilitando o diagnóstico no painel de logs da Vercel.
-- **Health Check & Diagnóstico**: Endpoint `/api/v1/health` fornece diagnóstico em tempo real da conectividade e tempo de resposta do SAPL.
-
-### Variáveis no Painel da Vercel (Settings > Environment Variables)
-
-```
-GEMINI_API_KEY=...       # Chave da Google Gemini AI
-EMAIL_USER=...           # E-mail Gmail de envio (ex: contato@exemplo.com)
-EMAIL_APP_PASSWORD=...   # Senha de aplicativo de 16 dígitos gerada no Google
-EMAIL_DESTINO=...        # E-mail que recebe os contatos enviados pelos usuários
-ALLOWED_ORIGINS=...      # Domínio frontend autorizado (ex: paflegis.vercel.app)
-NODE_ENV=production
-```
+1. Conecte seu repositório GitHub ao painel da Vercel.
+2. O framework Next.js é detectado automaticamente.
+3. Configure as variáveis de ambiente necessárias em **Project Settings > Environment Variables**.
+4. O deploy ocorre automaticamente a cada push na branch principal.
 
 ---
 
@@ -124,12 +127,11 @@ NODE_ENV=production
 
 - **LGPD (Lei nº 13.709/2018):** Política de privacidade, política de cookies, central de privacidade e formulário de exercício de direitos do titular implementados.
 - **LAI (Lei nº 12.527/2011):** Todos os dados legislativos exibidos são de domínio público, obtidos via API oficial do SAPL.
-- **Dados:** O Paflegis não coleta dados sensíveis. Preferências locais são armazenadas no navegador do usuário via `localStorage`.
+- **Privacidade Local:** Preferências de acessibilidade (como alto contraste) são armazenadas localmente no dispositivo do usuário (`localStorage`).
 
 ---
 
 ## Licença
 
-- **Interface e código-fonte:** Propriedade intelectual dos desenvolvedores do Paflegis (Lei nº 9.610/1998 e Lei nº 9.609/1998).
-- **Dados legislativos:** Domínio público — Câmara Municipal de Pedro Afonso - TO — reproduzidos com fundamento na LAI.
-- **Conteúdo via SAPL:** [Creative Commons 4.0](https://creativecommons.org/licenses/by/4.0/) - Atribuir Fonte.
+- **Código-fonte:** Licença MIT.
+- **Dados legislativos:** Domínio público — Câmara Municipal de Pedro Afonso - TO.

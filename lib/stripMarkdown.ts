@@ -1,35 +1,34 @@
 /**
- * lib/stripMarkdown.ts — Sanitizador de Markdown para o Assistente Paflegis.
- * Garante que nenhum símbolo visual de markdown (*, **, #, ---, etc.) seja
- * exibido como texto literal nas bolhas de conversa do chat.
+ * lib/stripMarkdown.ts — Remove formatações markdown garantindo texto plano puro.
  */
 
-export function stripMarkdown(text: string): string {
-  if (!text) return '';
-  let clean = text;
-
-  // 1. Remove linhas divisórias isoladas (ex: ---, ***, ___)
-  clean = clean.replace(/^[ \t]*[-*_]{3,}[ \t]*$/gm, '');
-
-  // 2. Remove cabeçalhos markdown (# Título, ## Título, ### Título)
-  clean = clean.replace(/^[ \t]*#{1,6}[ \t]+(.*)$/gm, '$1');
-
-  // 3. Remove negrito e itálico (**texto**, __texto__, *texto*, _texto_)
-  clean = clean.replace(/(\*\*|__)(.*?)\1/g, '$2');
-  clean = clean.replace(/(\*|_)(.*?)\1/g, '$2');
-
-  // 4. Converte marcadores de lista com asterisco ou hífen para marcadores limpos ou número
-  clean = clean.replace(/^[ \t]*[*+-][ \t]+/gm, '• ');
-
-  // 5. Remove marcadores de código (`código`, ```código```)
-  clean = clean.replace(/```[\s\S]*?```/g, m => m.replace(/```/g, ''));
-  clean = clean.replace(/`([^`]+)`/g, '$1');
-
-  // 6. Remove asteriscos soltos que possam ter sobrado
-  clean = clean.replace(/\*\*/g, '').replace(/\*/g, '');
-
-  // 7. Normaliza quebras de linha excessivas (máximo 2 seguidas)
-  clean = clean.replace(/\n{3,}/g, '\n\n');
-
-  return clean.trim();
+export function stripMarkdown(md: string): string {
+  if (!md) return '';
+  return md
+    // Headers (# H1, ## H2, etc.)
+    .replace(/^#{1,6}\s+/gm, '')
+    // Bold / Italic (**text**, *text*, __text__, _text_)
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    // Strikethrough (~~text~~)
+    .replace(/~~(.*?)~~/g, '$1')
+    // Inline code (`code`)
+    .replace(/`([^`]+)`/g, '$1')
+    // Code blocks (```lang ... ```)
+    .replace(/```[\s\S]*?```/g, '')
+    // Links ([text](url))
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Images (![alt](url))
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    // Blockquotes (> quote)
+    .replace(/^\s*>\s+/gm, '')
+    // Unordered lists (- item, * item, + item)
+    .replace(/^\s*[-*+]\s+/gm, '')
+    // Ordered lists (1. item)
+    .replace(/^\s*\d+\.\s+/gm, '')
+    // Horizontal rules (---, ***, ___)
+    .replace(/^(\*{3,}|-{3,}|_{3,})$/gm, '')
+    // Clean multiple line breaks
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }

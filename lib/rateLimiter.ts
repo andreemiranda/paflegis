@@ -1,7 +1,8 @@
 /**
- * lib/rateLimiter.ts — Controlagem de taxa de requisições por IP.
- * Funciona tanto em servidores Node.js quanto em funções serverless Vercel.
+ * lib/rateLimiter.ts — Rate limiting para Route Handlers do Next.js.
  */
+
+import { NextRequest } from 'next/server';
 
 interface RateLimitEntry {
   count: number;
@@ -10,13 +11,12 @@ interface RateLimitEntry {
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
-// Limpeza automática periódica de entradas expiradas
 if (typeof setInterval !== 'undefined') {
   const timer = setInterval(() => {
     const now = Date.now();
-    for (const [ip, entry] of rateLimitMap.entries()) {
+    for (const [key, entry] of rateLimitMap.entries()) {
       if (now > entry.resetTime) {
-        rateLimitMap.delete(ip);
+        rateLimitMap.delete(key);
       }
     }
   }, 5 * 60 * 1000);
@@ -25,37 +25,29 @@ if (typeof setInterval !== 'undefined') {
   }
 }
 
-/**
- * Obtém o endereço IP do cliente a partir de uma requisição HTTP.
- */
-export function getClientIp(req: any): string {
-  if (!req) return '127.0.0.1';
-
-  const forwarded = req.headers?.['x-forwarded-for'] || req.headers?.['X-Forwarded-For'];
+export function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
-    const rawIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
-    const ip = String(rawIp).split(',')[0].trim();
+    const ip = forwarded.split(',')[0].trim();
     if (ip) return ip;
   }
-
-  const realIp = req.headers?.['x-real-ip'] || req.headers?.['X-Real-IP'];
-  if (realIp && typeof realIp === 'string') {
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp && realIp.trim()) {
     return realIp.trim();
   }
-
-  return req.ip || req.socket?.remoteAddress || '127.0.0.1';
+  return '127.0.0.1';
 }
 
-/**
- * Verifica se o IP excedeu a quantidade máxima de requisições na janela informada (em milissegundos).
- */
 export function checkRateLimit(
-  ip: string,
-  maxRequests: number,
-  windowMs: number
+  req: NextRequest,
+  maxRequests = 120,
+  windowMs = 60 * 1000
 ): { allowed: boolean; remaining: number; resetTime: number } {
+  const ip = getClientIp(req);
+  const keyHeader = req.headers.get('x-api-key') || req.headers.get('X-API-KEY');
+  const key = keyHeader ? `key:${keyHeader.trim()}` : `ip:${ip}`;
   const now = Date.now();
-  const key = ip || 'unknown_ip';
+
   const entry = rateLimitMap.get(key);
 
   if (!entry || now > entry.resetTime) {

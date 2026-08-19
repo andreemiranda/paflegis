@@ -1,14 +1,3 @@
-/**
- * lib/mail/mailer.ts — Envio de e-mail via SMTP do Gmail com nodemailer.
- *
- * Usado por: server.ts (dev local) e api/index.ts (Vercel Serverless Function).
- *
- * Variáveis de ambiente obrigatórias (configurar no Vercel → Settings → Environment Variables):
- *   EMAIL_USER          — endereço Gmail de envio (ex: seuprojeto@gmail.com)
- *   EMAIL_APP_PASSWORD  — senha de app de 16 dígitos gerada no Google
- *   EMAIL_DESTINO       — e-mail que receberá as mensagens de contato
- */
-
 import nodemailer from 'nodemailer';
 
 export interface EnvioParams {
@@ -19,24 +8,14 @@ export interface EnvioParams {
   origem: string;
 }
 
-/** Valida presença das variáveis de e-mail na inicialização e registra status nos logs. */
 export function validarConfigEmail(): boolean {
   const missing: string[] = [];
-  if (!process.env.EMAIL_USER)         missing.push('EMAIL_USER');
+  if (!process.env.EMAIL_USER) missing.push('EMAIL_USER');
   if (!process.env.EMAIL_APP_PASSWORD) missing.push('EMAIL_APP_PASSWORD');
-  if (!process.env.EMAIL_DESTINO)      missing.push('EMAIL_DESTINO');
-  if (missing.length > 0) {
-    console.warn(
-      `[WARN] [mailer] Variáveis de ambiente ausentes para envio de e-mail SMTP: ${missing.join(', ')}. ` +
-      'O formulário de contato não enviará e-mails até que sejam configuradas. ' +
-      'Consulte CONTATO_SETUP.md para instruções.'
-    );
-    return false;
-  }
-  return true;
+  if (!process.env.EMAIL_DESTINO) missing.push('EMAIL_DESTINO');
+  return missing.length === 0;
 }
 
-/** Cria o transporter SMTP. Lança erro explícito se credenciais ausentes. */
 function criarTransporter() {
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_APP_PASSWORD;
@@ -51,7 +30,6 @@ function criarTransporter() {
   });
 }
 
-/** Monta o HTML do e-mail. */
 function montarHtml(p: EnvioParams): string {
   const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
@@ -105,11 +83,6 @@ function montarHtml(p: EnvioParams): string {
 </html>`.trim();
 }
 
-/**
- * Envia um e-mail de contato.
- * Lança Error se as variáveis de ambiente não estiverem configuradas ou se o SMTP falhar.
- * Nunca simula sucesso em caso de falha real.
- */
 export async function enviarEmail(params: EnvioParams): Promise<void> {
   const destino = process.env.EMAIL_DESTINO;
   if (!destino) throw new Error('[mailer] EMAIL_DESTINO não configurado.');
@@ -124,7 +97,6 @@ export async function enviarEmail(params: EnvioParams): Promise<void> {
   });
 }
 
-/** Monta o HTML da auto-resposta. */
 function montarHtmlAutoResposta(nome: string, protocolo: string): string {
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<!DOCTYPE html>
@@ -157,9 +129,6 @@ function montarHtmlAutoResposta(nome: string, protocolo: string): string {
 </html>`.trim();
 }
 
-/**
- * Envia e-mail de auto-resposta ao usuário com número de protocolo.
- */
 export async function enviarAutoResposta(emailUser: string, nomeUser: string, protocolo: string): Promise<void> {
   const transporter = criarTransporter();
   await transporter.sendMail({
