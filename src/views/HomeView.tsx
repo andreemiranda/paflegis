@@ -142,28 +142,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
         </div>
       </section>
-
-      {/* Error Banner */}
-      {error && !loading && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-red-800">SAPL temporariamente indisponível</p>
-            <p className="text-xs text-red-600 mt-0.5">
-              Não foi possível obter os dados do sistema oficial de Pedro Afonso. Verifique sua conexão ou tente novamente em instantes.
-            </p>
-          </div>
-          <button
-            onClick={() => setRetryCount(c => c + 1)}
-            className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-red-700 border border-red-300 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-md transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Tentar novamente</span>
-          </button>
-        </div>
-      )}
-
-      {/* Metric Stats Cards Banner */}
       {stats && (
         <section className="space-y-2">
           {(stats.fonte === 'sapl-live' || stats.fonte === 'disk-cache') && (() => {

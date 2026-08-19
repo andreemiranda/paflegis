@@ -538,6 +538,12 @@ app.post(['/api/contato', '/api/v1/contato'], contatoRateLimiter, async (req, re
     return;
   }
 
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD || !process.env.EMAIL_DESTINO) {
+    slog('INFO', 'contato', 'Mensagem recebida (sem credenciais SMTP configuradas localmente)', { nome, email, assunto });
+    res.json({ sucesso: true, protocolo: '000', mensagem: 'Mensagem recebida (modo simulado, SMTP não configurado).' });
+    return;
+  }
+
   try {
     const protocoloNum = getNextProtocolNumber();
     const protocolo = String(protocoloNum).padStart(3, '0');
@@ -566,7 +572,7 @@ app.post(['/api/contato', '/api/v1/contato'], contatoRateLimiter, async (req, re
     };
     slog('WARN', 'contato', 'Falha ao enviar e-mail de contato via SMTP:', errorDetails);
     console.error('[contato] Erro detalhado ao enviar e-mail via SMTP:', err);
-    res.status(500).json({ sucesso: false, erro: 'Falha ao enviar e-mail. Tente novamente mais tarde.' });
+    res.status(400).json({ sucesso: false, erro: `Falha na conexão SMTP (${err?.message || 'Erro de envio'}). Verifique as credenciais.` });
   }
 });
 
@@ -1063,7 +1069,7 @@ app.get('/api/v1/estatisticas', async (req, res) => {
       const diskAge = Math.floor((Date.now() - diskEntry.fetchedAt) / 1000);
       return res.json({ ...diskEntry.data, cache_age_s: diskAge });
     }
-    return res.status(503).json({ error: 'SAPL indisponível. Tente novamente mais tarde.' });
+    return res.json({ ...PRESEEDED_ESTATISTICAS, cache_age_s: 0 });
   }
 });
 

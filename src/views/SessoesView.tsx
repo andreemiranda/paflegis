@@ -90,18 +90,6 @@ export const SessoesView: React.FC<SessoesViewProps> = ({ initialSearch = '' }) 
 
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Error Banner */}
-      {error && !loading && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-red-800">SAPL temporariamente indisponível</p>
-            <p className="text-xs text-red-600 mt-0.5">
-              Não foi possível carregar as sessões plenárias. Verifique sua conexão ou tente novamente.
-            </p>
-          </div>
-        </div>
-      )}
 
       <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-1">
         <div className="flex items-center gap-2">

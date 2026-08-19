@@ -69,7 +69,7 @@ export function AppIntro({ onComplete }: { onComplete: () => void }) {
                 Paflegis
               </h1>
               <p className="text-sm sm:text-lg text-blue-200 font-medium tracking-wide uppercase">
-                Transparência Legislativa
+                Transparência Legislativa Independente
               </p>
             </motion.div>
           </motion.div>
