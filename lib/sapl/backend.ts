@@ -3,8 +3,8 @@
  * Compatível com Next.js Node.js runtime e Vercel Serverless.
  */
 
-export const SAPL_API_BASE      = 'https://sapl.pedroafonso.to.leg.br/api';
-export const SAPL_PUBLIC_DOMAIN = 'https://sapl.pedroafonso.to.leg.br';
+export const SAPL_API_BASE      = process.env.SAPL_API_BASE || 'https://sapl.pedroafonso.to.leg.br/api';
+export const SAPL_PUBLIC_DOMAIN = process.env.SAPL_PUBLIC_DOMAIN || 'https://sapl.pedroafonso.to.leg.br';
 
 export type LogLevel = 'INFO' | 'WARN' | 'ERROR';
 
@@ -24,13 +24,13 @@ export function slog(level: LogLevel, ctx: string, msg: string, err?: unknown): 
  * - 5xx / rede / timeout: retentado no máximo maxRetries vezes com backoff curto (300ms a 500ms).
  */
 export async function safeFetchWithRetry(
-  url: string, timeoutMs = 4000, maxRetries = 1,
+  url: string, timeoutMs = 15000, maxRetries = 2,
 ): Promise<Response> {
   let lastErr: unknown;
   const startTime = Date.now();
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (attempt > 0) {
-      await new Promise<void>(r => setTimeout(r, 350));
+      await new Promise<void>(r => setTimeout(r, 500 * attempt));
       slog('INFO', 'sapl-retry', `Tentativa ${attempt + 1}/${maxRetries + 1} (${Date.now() - startTime}ms): ${url}`);
     }
     try {
@@ -41,6 +41,7 @@ export async function safeFetchWithRetry(
       };
       const res = await fetch(url, { 
         headers,
+        cache: 'no-store',
         signal: AbortSignal.timeout(timeoutMs) 
       });
       if (res.status >= 400 && res.status < 500) return res; // 4xx: sem retry
@@ -124,7 +125,7 @@ export async function checkSaplHealth(): Promise<{ reachable: boolean; latencyMs
     };
     const res = await fetch(
       `${SAPL_API_BASE}/materia/materialegislativa/?page_size=1`,
-      { headers, signal: AbortSignal.timeout(5000) },
+      { headers, cache: 'no-store', signal: AbortSignal.timeout(5000) },
     );
     return { reachable: res.ok, latencyMs: Date.now() - start };
   } catch {

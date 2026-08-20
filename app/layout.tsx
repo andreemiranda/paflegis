@@ -14,18 +14,6 @@ export const metadata: Metadata = {
   },
   description:
     'Portal cívico e independente para consulta de matérias legislativas, normas jurídicas, atas e sessões plenárias da Câmara Municipal de Pedro Afonso - TO.',
-  keywords: [
-    'Paflegis',
-    'Pedro Afonso',
-    'Tocantins',
-    'Câmara Municipal',
-    'Leis Municipais',
-    'Projetos de Lei',
-    'Sessões Plenárias',
-    'Transparência',
-    'SAPL',
-  ],
-  authors: [{ name: 'Paflegis Comunidade Cívica' }],
   creator: 'Paflegis',
   publisher: 'Paflegis',
   formatDetection: {
@@ -58,30 +46,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: 'Paflegis',
-    url: 'https://paflegis.vercel.app',
-    description:
-      'Portal cívico e independente para consulta de matérias legislativas, normas jurídicas e sessões plenárias de Pedro Afonso - TO.',
-    applicationCategory: 'GovernmentApplication',
-    operatingSystem: 'All',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'BRL',
-    },
-  };
-
   return (
     <html lang="pt-BR">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </head>
       <body>
         <AccessibilityBar />
         <Header />

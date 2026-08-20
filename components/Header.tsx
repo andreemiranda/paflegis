@@ -67,8 +67,7 @@ export default function Header() {
 
   const toggleMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    setShowMegaMenu((prev) => !prev);
+    setShowMegaMenu(!showMegaMenu);
   };
 
   return (

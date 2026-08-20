@@ -1,13 +1,10 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { NextRequest, NextResponse } from 'next/server';
-import { SAPL_API_BASE, safeFetchWithRetry, slog } from '@/lib/sapl/backend';
+import { SAPL_API_BASE, } from '@/lib/sapl/backend';
 import { setPersistentCache, getPersistentCache, PRESEEDED_ESTATISTICAS } from '@/lib/sapl/cache';
-import { validateApiRequest } from '@/lib/auth/apiKeyAuth';
 
 export async function GET(req: NextRequest) {
-  const auth = validateApiRequest(req);
-  if (!auth.authorized) {
-    return NextResponse.json({ error: auth.reason, code: 'UNAUTHORIZED_API_KEY' }, { status: 401 });
-  }
 
   const anoAtual = new Date().getFullYear();
   const cacheKey = 'estatisticas:live';
@@ -15,12 +12,12 @@ export async function GET(req: NextRequest) {
 
   async function count(url: string): Promise<number> {
     try {
-      const r = await safeFetchWithRetry(url, 3500, 0);
+      const r = await fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(15000) });
       if (!r.ok) return 0;
       const d = await r.json();
       return d.count ?? d.pagination?.total_entries ?? (Array.isArray(d.results) ? d.results.length : 0);
-    } catch (e) {
-      slog('WARN', 'handleEstatisticas', `Contagem falhou para ${url}`, e);
+    } catch (e: any) {
+      console.warn(`Contagem falhou para ${url}`, e.message);
       return 0;
     }
   }
@@ -41,8 +38,8 @@ export async function GET(req: NextRequest) {
     let normasTipos: { id: number; descricao: string }[] = [];
     try {
       const [mTRes, nTRes] = await Promise.all([
-        safeFetchWithRetry(`${SAPL_API_BASE}/materia/tipomaterialegislativa/`, 3500, 0),
-        safeFetchWithRetry(`${SAPL_API_BASE}/norma/tiponormajuridica/`, 3500, 0),
+        fetch(`${SAPL_API_BASE}/materia/tipomaterialegislativa/`, { headers: { 'Accept': 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(15000) }),
+        fetch(`${SAPL_API_BASE}/norma/tiponormajuridica/`, { headers: { 'Accept': 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(15000) }),
       ]);
       if (mTRes.ok) {
         const d = await mTRes.json();
@@ -52,8 +49,8 @@ export async function GET(req: NextRequest) {
         const d = await nTRes.json();
         normasTipos = (d.results || d).map((t: any) => ({ id: t.id, descricao: t.descricao || t.sigla || '' }));
       }
-    } catch (e) {
-      slog('WARN', 'handleEstatisticas', 'Erro ao buscar tipos para estatísticas', e);
+    } catch (e: any) {
+      console.warn('Erro ao buscar tipos para estatísticas', e.message);
     }
 
     const [mTipos, nTipos] = await Promise.all([
@@ -97,8 +94,8 @@ export async function GET(req: NextRequest) {
 
     setPersistentCache(cacheKey, payload);
     return NextResponse.json(payload);
-  } catch (e) {
-    slog('WARN', 'handleEstatisticas', `Falha ao calcular estatísticas (${Date.now() - startMs}ms)`, e);
+  } catch (e: any) {
+    console.warn(`Falha ao calcular estatísticas (${Date.now() - startMs}ms)`, e.message);
   }
 
   const cached = getPersistentCache<any>(cacheKey);
