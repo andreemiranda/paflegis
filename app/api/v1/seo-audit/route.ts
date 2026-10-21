@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkSaplHealth } from '@/lib/sapl/backend';
+import { checkSaplHealth, SAPL_API_BASE } from '@/lib/sapl/backend';
 
 export async function GET() {
   const { reachable, latencyMs } = await checkSaplHealth();
@@ -11,7 +11,7 @@ export async function GET() {
       sapl_api: {
         status: reachable ? 'pass' : 'fail',
         latency_ms: latencyMs,
-        endpoint: 'https://sapl.pedroafonso.to.leg.br/api',
+        endpoint: SAPL_API_BASE,
       },
       sitemap: {
         status: 'pass',

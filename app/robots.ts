@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/v1/chat', '/api/v1/contato'],
+      disallow: ['/api/v1/contato'],
     },
     sitemap: 'https://paflegis.vercel.app/sitemap.xml',
   };

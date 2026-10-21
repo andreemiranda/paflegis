@@ -76,7 +76,7 @@ export default function SobrePage() {
               <li className="d-flex align-items-center gap-2">
                 <span className="badge bg-success">Oficial</span>
                 <a
-                  href="https://sapl.pedroafonso.to.leg.br"
+                  href={process.env.NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN || "https://sapl.pedroafonso.to.leg.br"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary text-decoration-none d-flex align-items-center gap-1"

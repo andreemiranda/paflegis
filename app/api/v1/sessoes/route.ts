@@ -5,8 +5,10 @@ export const revalidate = 0;
 
 import {
   SAPL_API_BASE,
+  safeFetchWithRetry,
   normalizeUrl,
   dateBR,
+  sanitizeSaplData,
 } from '@/lib/sapl/backend';
 
 export async function GET(req: NextRequest) {
@@ -18,7 +20,7 @@ export async function GET(req: NextRequest) {
   const limitNum = searchParams.get('limite') || searchParams.get('limit') || searchParams.get('page_size') || '10';
 
   const url = new URL(`${SAPL_API_BASE}/sessao/sessaoplenaria/`);
-  
+
   if (search) url.searchParams.set('search', search);
   if (tipo) url.searchParams.set('tipo', tipo);
   if (ano) {
@@ -30,11 +32,7 @@ export async function GET(req: NextRequest) {
   url.searchParams.set('ordering', '-data_inicio');
 
   try {
-    const res = await fetch(url.toString(), {
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(15000),
-    });
+    const res = await safeFetchWithRetry(url.toString(), 15000, 2);
 
     if (!res.ok) {
       return NextResponse.json(
@@ -43,12 +41,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const data = await res.json();
-    
+    const rawData = await res.json();
+    const data = sanitizeSaplData(rawData);
+
     const items = (data.results || []).map((it: any) => ({
       id: it.id,
       numero: it.numero,
-      ano: it.data_inicio ? new Date(it.data_inicio).getFullYear() : (it.ano || new Date().getFullYear()),
+      ano: it.data_inicio
+        ? new Date(it.data_inicio).getFullYear()
+        : it.ano || new Date().getFullYear(),
       tipo: it.tipo_sessao?.descricao || it.tipo || 'Sessão Plenária',
       data: dateBR(it.data_inicio || it.data),
       horario: it.hora_inicio || '',
@@ -68,10 +69,12 @@ export async function GET(req: NextRequest) {
       total: data.pagination?.total_entries || data.count || items.length,
       page: Number(pageNum),
       limit: Number(limitNum),
-      totalPages: data.pagination?.total_pages || Math.ceil((data.count || items.length) / Number(limitNum)) || 1,
-      fonte: 'sapl-live'
+      totalPages:
+        data.pagination?.total_pages ||
+        Math.ceil((data.count || items.length) / Number(limitNum)) ||
+        1,
+      fonte: 'sapl-live',
     });
-
   } catch (error: any) {
     console.error('[SAPL API ERROR - Sessoes]', error.message);
     return NextResponse.json(

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle2, XCircle, RefreshCw, ExternalLink, Activity, Server, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, RefreshCw, ExternalLink, Activity, Server, FileText } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
 
 export default function SeoAuditPage() {
@@ -32,7 +32,7 @@ export default function SeoAuditPage() {
         </div>
         <h1 className="h2 fw-bold text-dark mb-2">Auditoria de SEO & Conectividade do Sistema</h1>
         <p className="lead text-muted mx-auto" style={{ maxWidth: 650 }}>
-          Painel de monitoramento da saúde das conexões com o SAPL, infraestrutura de IA e indexação de dados.
+          Painel de monitoramento da saúde das conexões com o SAPL, integridade das rotas de dados e indexação pública.
         </p>
       </div>
 
@@ -66,7 +66,7 @@ export default function SeoAuditPage() {
               </div>
             )}
             <p className="text-muted small mb-0">
-              Endpoint verificado: <code>https://sapl.pedroafonso.to.leg.br/api</code>
+              Endpoint verificado: <code>{health?.sapl_endpoint || 'https://sapl.pedroafonso.to.leg.br/api'}</code>
             </p>
           </div>
         </div>

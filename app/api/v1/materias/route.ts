@@ -5,9 +5,11 @@ export const revalidate = 0;
 
 import {
   SAPL_API_BASE,
+  safeFetchWithRetry,
   extractAutor,
   normalizeUrl,
   dateBR,
+  sanitizeSaplData,
 } from '@/lib/sapl/backend';
 
 export async function GET(req: NextRequest) {
@@ -19,21 +21,17 @@ export async function GET(req: NextRequest) {
   const limitNum = searchParams.get('limite') || searchParams.get('limit') || searchParams.get('page_size') || '10';
 
   const url = new URL(`${SAPL_API_BASE}/materia/materialegislativa/`);
-  
+
   // Repassar parâmetros de acordo com o OpenAPI
   if (search) url.searchParams.set('search', search);
   if (tipo) url.searchParams.set('tipo', tipo);
   if (ano) url.searchParams.set('ano', ano);
   url.searchParams.set('page', pageNum);
   url.searchParams.set('page_size', limitNum);
-  url.searchParams.set('ordering', '-ano,-numero'); // Default ordering
+  url.searchParams.set('ordering', '-ano,-numero');
 
   try {
-    const res = await fetch(url.toString(), {
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(15000),
-    });
+    const res = await safeFetchWithRetry(url.toString(), 15000, 2);
 
     if (!res.ok) {
       return NextResponse.json(
@@ -42,8 +40,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const data = await res.json();
-    
+    const rawData = await res.json();
+    // Sanitiza todos os IPs brutos 64.23.167.191 para o domínio público configurado
+    const data = sanitizeSaplData(rawData);
+
     // Normalizar dados
     const items = (data.results || []).map((it: any) => ({
       id: it.id,
@@ -67,10 +67,12 @@ export async function GET(req: NextRequest) {
       total: data.pagination?.total_entries || data.count || items.length,
       page: Number(pageNum),
       limit: Number(limitNum),
-      totalPages: data.pagination?.total_pages || Math.ceil((data.count || items.length) / Number(limitNum)) || 1,
-      fonte: 'sapl-live'
+      totalPages:
+        data.pagination?.total_pages ||
+        Math.ceil((data.count || items.length) / Number(limitNum)) ||
+        1,
+      fonte: 'sapl-live',
     });
-
   } catch (error: any) {
     console.error('[SAPL API ERROR - Materias]', error.message);
     return NextResponse.json(

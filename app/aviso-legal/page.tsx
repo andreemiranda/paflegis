@@ -18,7 +18,7 @@ export default function AvisoLegalPage() {
             </span>
             <h1 className="h2 fw-bold text-dark mb-2">Aviso Legal</h1>
             <p className="text-muted small mb-0">
-              Versão 1.0 · Última atualização: Julho de 2026
+              Versão 1.0 · Última atualização: Outubro de 2026
             </p>
           </div>
 
@@ -37,14 +37,14 @@ export default function AvisoLegalPage() {
               </p>
             </section>
 
-            <section className="mb-4">
+            <section className="mb-0">
               <h4 className="fw-bold text-dark fs-5 mb-3">2. Fé Pública e Validade Oficial</h4>
               <p className="text-muted small lh-lg">
                 Para fins de publicação legal com efeito de fé pública, certidões oficiais ou prazos processuais, o único canal com validade jurídica formal é o Diário Oficial e o Sistema de Apoio ao Processo Legislativo (SAPL) oficial do município:
               </p>
               <div className="p-3 bg-light rounded-3 small">
                 <a
-                  href="https://sapl.pedroafonso.to.leg.br"
+                  href={process.env.NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN || "https://sapl.pedroafonso.to.leg.br"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="fw-bold text-primary text-decoration-none d-inline-flex align-items-center gap-1"
@@ -53,13 +53,6 @@ export default function AvisoLegalPage() {
                   <ExternalLink size={14} />
                 </a>
               </div>
-            </section>
-
-            <section>
-              <h4 className="fw-bold text-dark fs-5 mb-3">3. Inteligência Artificial Cívica</h4>
-              <p className="text-muted small lh-lg mb-0">
-                As respostas geradas pelo assistente de Inteligência Artificial têm caráter meramente informativo e simplificador de linguagem, não constituindo parecer jurídico ou posicionamento institucional da mesa diretora ou dos parlamentares.
-              </p>
             </section>
           </div>
         </div>

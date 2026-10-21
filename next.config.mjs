@@ -1,18 +1,31 @@
 /** @type {import('next').NextConfig} */
+
+const saplHostname = (() => {
+  try {
+    const raw = process.env.SAPL_PUBLIC_DOMAIN || process.env.NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN || 'https://sapl.pedroafonso.to.leg.br';
+    const u = new URL(raw.startsWith('http') ? raw : `https://${raw}`);
+    return u.hostname;
+  } catch {
+    return 'sapl.pedroafonso.to.leg.br';
+  }
+})();
+
+const uniqueHostnames = Array.from(new Set(['sapl.pedroafonso.to.leg.br', saplHostname]));
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'sapl.pedroafonso.to.leg.br',
-        port: '',
-        pathname: '/**',
-      },
-    ],
+    remotePatterns: uniqueHostnames.map((host) => ({
+      protocol: 'https',
+      hostname: host,
+      port: '',
+      pathname: '/**',
+    })),
   },
   async headers() {
+    const hostCsp = uniqueHostnames.map((h) => `https://${h}`).join(' ');
+
     return [
       {
         source: '/(.*)',
@@ -23,7 +36,10 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sapl.pedroafonso.to.leg.br https://*.youtube.com https://*.ytimg.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://sapl.pedroafonso.to.leg.br https://generativelanguage.googleapis.com https://*.google-analytics.com https://*.analytics.google.com; frame-src 'self' https://sapl.pedroafonso.to.leg.br https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com; media-src 'self' blob: data: https:; object-src 'none'; base-uri 'self';" }
+          {
+            key: 'Content-Security-Policy',
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${hostCsp} https://*.youtube.com https://*.ytimg.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' ${hostCsp} https://*.google-analytics.com https://*.analytics.google.com; frame-src 'self' ${hostCsp} https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com; media-src 'self' blob: data: https:; object-src 'none'; base-uri 'self';`
+          }
         ],
       },
       {

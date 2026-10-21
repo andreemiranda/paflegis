@@ -21,6 +21,27 @@ export interface PaginatedResult<T> {
   sapl_indisponivel?: boolean;
 }
 
+export interface SaplEndpointsResponse {
+  total_endpoints: number;
+  retornados: number;
+  fonte: string;
+  configuracao: {
+    sapl_api_base: string;
+    sapl_public_domain: string;
+    sapl_origin_ip_sanitized: string;
+    substituicao_ip_ativa: boolean;
+  };
+  modulos: { id: string; titulo: string; total: number }[];
+  endpoints_map: Record<string, string>;
+  endpoints: {
+    key: string;
+    url: string;
+    path: string;
+    module: string;
+    module_title: string;
+  }[];
+}
+
 export class ApiError extends Error {
   status: number;
   code?: string;
@@ -35,18 +56,18 @@ export class ApiError extends Error {
 
 async function paflegisFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = path.startsWith('http') ? path : path;
-  
+
   let res: Response;
   try {
     res = await fetch(url, {
       ...options,
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json',
         ...(options?.headers || {}),
       },
     });
-  } catch (err: any) {
+  } catch {
     throw new ApiError(
       'Não foi possível conectar ao servidor. Verifique sua conexão com a internet.',
       0,
@@ -79,18 +100,26 @@ async function paflegisFetch<T>(path: string, options?: RequestInit): Promise<T>
     } catch {}
 
     if (res.status === 404) {
-      throw new ApiError(errorDetail || 'Recurso ou documento legislativo não encontrado.', 404, 'NOT_FOUND');
+      throw new ApiError(
+        errorDetail || 'Recurso ou documento legislativo não encontrado.',
+        404,
+        'NOT_FOUND'
+      );
     }
 
     if (res.status >= 500) {
       throw new ApiError(
-        errorDetail || 'O serviço de dados do SAPL está temporariamente instável. Tente novamente em instantes.',
+        errorDetail ||
+          'O serviço de dados do SAPL está temporariamente instável. Tente novamente em instantes.',
         res.status,
         'SERVER_ERROR'
       );
     }
 
-    throw new ApiError(errorDetail || `Erro na requisição (HTTP ${res.status})`, res.status);
+    throw new ApiError(
+      errorDetail || `Erro na requisição (HTTP ${res.status})`,
+      res.status
+    );
   }
 
   return res.json() as Promise<T>;
@@ -154,11 +183,19 @@ export const api = {
     return paflegisFetch<EstatisticasLegislativas>('/api/v1/estatisticas');
   },
 
+  getEndpoints: (format?: string): Promise<SaplEndpointsResponse> => {
+    const qs = format ? `?format=${encodeURIComponent(format)}` : '';
+    return paflegisFetch<SaplEndpointsResponse>(`/api/v1/endpoints${qs}`);
+  },
+
   getHealth: (): Promise<{
     status: string;
     sapl: string;
     sapl_latency_ms: number;
-    gemini: string;
+    sapl_endpoint: string;
+    sapl_public_domain: string;
+    sapl_origin_ip_sanitized: string;
+    ip_replacement_active: boolean;
     auth: { apiKeysConfigured: boolean; strategy: string };
   }> => {
     return paflegisFetch('/api/v1/health');
@@ -175,16 +212,6 @@ export const api = {
     return paflegisFetch('/api/v1/contato', {
       method: 'POST',
       body: JSON.stringify(data),
-    });
-  },
-
-  sendChatMessage: (
-    message: string,
-    history: { role: string; content: string }[]
-  ): Promise<{ reply?: string; error?: string; isOutOfScope?: boolean }> => {
-    return paflegisFetch('/api/v1/chat', {
-      method: 'POST',
-      body: JSON.stringify({ message, history }),
     });
   },
 };

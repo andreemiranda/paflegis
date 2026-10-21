@@ -4,7 +4,6 @@ import AccessibilityBar from '@/components/AccessibilityBar';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CookieConsent from '@/components/CookieConsent';
-import AIChatAssistant from '@/components/AIChatAssistant';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://paflegis.vercel.app'),
@@ -53,7 +52,6 @@ export default function RootLayout({
         <Header />
         <main className="flex-grow-1">{children}</main>
         <Footer />
-        <AIChatAssistant />
         <CookieConsent />
       </body>
     </html>

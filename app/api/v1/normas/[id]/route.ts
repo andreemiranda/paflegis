@@ -5,8 +5,10 @@ export const revalidate = 0;
 
 import {
   SAPL_API_BASE,
+  safeFetchWithRetry,
   normalizeUrl,
   dateBR,
+  sanitizeSaplData,
 } from '@/lib/sapl/backend';
 
 export async function GET(
@@ -16,14 +18,16 @@ export async function GET(
   const { id } = await context.params;
 
   try {
-    const res = await fetch(`${SAPL_API_BASE}/norma/normajuridica/${id}/`, {
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(15000),
-    });
+    const res = await safeFetchWithRetry(
+      `${SAPL_API_BASE}/norma/normajuridica/${id}/`,
+      15000,
+      2
+    );
 
     if (res.ok) {
-      const it = await res.json();
+      const raw = await res.json();
+      const it = sanitizeSaplData(raw);
+
       const payload = {
         id: it.id,
         numero: it.numero,
@@ -43,7 +47,7 @@ export async function GET(
       };
       return NextResponse.json(payload);
     }
-    
+
     return NextResponse.json({ error: 'Norma jurídica não encontrada' }, { status: 404 });
   } catch (e: any) {
     console.error(`[SAPL API ERROR - Norma ID ${id}]`, e.message);

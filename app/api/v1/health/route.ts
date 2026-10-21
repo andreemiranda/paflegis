@@ -1,8 +1,13 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
-import { checkSaplHealth } from '@/lib/sapl/backend';
-import { getGeminiApiKey } from '@/lib/gemini/client';
+import {
+  checkSaplHealth,
+  SAPL_API_BASE,
+  SAPL_PUBLIC_DOMAIN,
+  SAPL_ORIGIN_IP,
+} from '@/lib/sapl/backend';
 import { getAuthDiagnostics } from '@/lib/auth/apiKeyAuth';
 
 export async function GET() {
@@ -13,7 +18,10 @@ export async function GET() {
     status: reachable ? 'ok' : 'degraded',
     sapl: reachable ? 'reachable' : 'unreachable',
     sapl_latency_ms: latencyMs,
-    gemini: getGeminiApiKey() ? 'configured' : 'not_configured',
+    sapl_endpoint: SAPL_API_BASE,
+    sapl_public_domain: SAPL_PUBLIC_DOMAIN,
+    sapl_origin_ip_sanitized: SAPL_ORIGIN_IP,
+    ip_replacement_active: true,
     auth: {
       apiKeysConfigured: auth.apiKeysConfigured,
       strategy: auth.strategy,
