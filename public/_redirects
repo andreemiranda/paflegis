@@ -1,7 +1,0 @@
-# ── Swagger UI Redirects ──────────────────────────────────────────────────
-/api-docs/*    /swagger-ui/:splat         200
-/api-docs      /swagger-ui/index.html     200
-/swagger-ui/*  /swagger-ui/:splat         200
-
-# ── SPA fallback - Netlify & Cloudflare Pages ─────────────────────────────────
-/*  /index.html  200
