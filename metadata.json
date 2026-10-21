@@ -1,0 +1,6 @@
+{
+  "name": "Paflegis",
+  "description": "Aplicativo cívico independente de consulta às informações legislativas de Pedro Afonso - TO.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
