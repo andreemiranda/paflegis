@@ -1,0 +1,478 @@
+export interface DocumentTypeInfo {
+  id: number;
+  slug: string;
+  sigla: string;
+  nome: string;
+  menuLabel: string;
+  categoria: 'Matérias e Projetos' | 'Requerimentos por Vereador' | 'Normas e Legislação' | 'Atos e Comissões';
+  descricao: string;
+  tipoApi: 'materia' | 'norma';
+  saplTipoId: number;
+}
+
+/**
+ * 38 Tipos Reais de Documentos extraídos diretamente da API do SAPL de Pedro Afonso - TO
+ * Cada tipo possui uma única palavra em `menuLabel` para exibição em linha única no menu suspenso.
+ */
+export const ALL_38_DOCUMENT_TYPES: DocumentTypeInfo[] = [
+  // --- Matérias e Projetos Legislativos (10 tipos) ---
+  {
+    id: 1,
+    slug: 'projeto-de-lei-do-legislativo',
+    sigla: 'PLL',
+    nome: 'Projeto de Lei do Legislativo',
+    menuLabel: 'Legislativo',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Proposição de iniciativa dos vereadores da Câmara Municipal de Pedro Afonso que visa criar ou alterar leis municipais.',
+    tipoApi: 'materia',
+    saplTipoId: 17,
+  },
+  {
+    id: 2,
+    slug: 'projeto-de-lei-do-executivo',
+    sigla: 'PLE',
+    nome: 'Projeto de Lei do Executivo',
+    menuLabel: 'Executivo',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Proposição de autoria do Prefeito Municipal submetida à deliberação da Câmara de Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 9,
+  },
+  {
+    id: 3,
+    slug: 'projeto-de-lei-complementar',
+    sigla: 'PLC',
+    nome: 'Projeto de Lei Complementar',
+    menuLabel: 'Complementar',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Projeto reservado para matérias específicas previstas na Lei Orgânica (código tributário, zoneamento, etc.).',
+    tipoApi: 'materia',
+    saplTipoId: 4,
+  },
+  {
+    id: 4,
+    slug: 'proposta-de-emenda-a-lei-organica',
+    sigla: 'PELo',
+    nome: 'Proposta de Emenda à Lei Orgânica',
+    menuLabel: 'Emenda-Orgânica',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Proposição destinada a modificar ou acrescentar dispositivos à Lei Orgânica Municipal de Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 39,
+  },
+  {
+    id: 5,
+    slug: 'projeto-de-decreto-legislativo',
+    sigla: 'PDL',
+    nome: 'Projeto de Decreto Legislativo',
+    menuLabel: 'Decreto-Leg.',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Regula matéria de competência exclusiva do Legislativo com efeitos externos (ex: julgamento de contas e honrarias).',
+    tipoApi: 'materia',
+    saplTipoId: 3,
+  },
+  {
+    id: 6,
+    slug: 'projeto-de-resolucao',
+    sigla: 'PRE',
+    nome: 'Projeto de Resolução',
+    menuLabel: 'Resoluções',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Destinado a regular matéria político-administrativa e de economia interna da Câmara de Vereadores.',
+    tipoApi: 'materia',
+    saplTipoId: 5,
+  },
+  {
+    id: 7,
+    slug: 'indicacao',
+    sigla: 'IND',
+    nome: 'Indicação',
+    menuLabel: 'Indicações',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Proposição em que o vereador sugere a realização de obras, serviços ou medidas de interesse público ao Executivo.',
+    tipoApi: 'materia',
+    saplTipoId: 25,
+  },
+  {
+    id: 8,
+    slug: 'mocao-de-pesar',
+    sigla: 'MOP',
+    nome: 'Moção de Pesar',
+    menuLabel: 'Pesar',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Manifestação oficial de solidariedade e condolências da Câmara aos familiares de munícipes falecidos.',
+    tipoApi: 'materia',
+    saplTipoId: 26,
+  },
+  {
+    id: 9,
+    slug: 'mocao-de-aplausos',
+    sigla: 'MOAPL',
+    nome: 'Moção de Aplausos',
+    menuLabel: 'Aplausos',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Homenagem e congratulações da Câmara Municipal a personalidades, entidades e feitos notáveis.',
+    tipoApi: 'materia',
+    saplTipoId: 28,
+  },
+  {
+    id: 10,
+    slug: 'autografo-de-lei',
+    sigla: 'AUTL',
+    nome: 'Autógrafo de Lei',
+    menuLabel: 'Autógrafos',
+    categoria: 'Matérias e Projetos',
+    descricao: 'Texto final aprovado em Plenário e encaminhado pelo Poder Legislativo ao Prefeito para sanção ou veto.',
+    tipoApi: 'materia',
+    saplTipoId: 7,
+  },
+
+  // --- Requerimentos por Vereador (16 tipos individuais cadastrados no SAPL) ---
+  {
+    id: 11,
+    slug: 'requerimentos-ver-agnaldo-lima',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Agnaldo Lima',
+    menuLabel: 'Agnaldo',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Agnaldo Lima no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 31,
+  },
+  {
+    id: 12,
+    slug: 'requerimentos-ver-antonio-neto',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Antonio Neto',
+    menuLabel: 'Antonio',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Antonio Neto no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 36,
+  },
+  {
+    id: 13,
+    slug: 'requerimentos-ver-breno-alves',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Breno Alves',
+    menuLabel: 'Breno',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Breno Alves no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 15,
+  },
+  {
+    id: 14,
+    slug: 'requerimentos-ver-gislayson-lacerda',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Gislayson Lacerda',
+    menuLabel: 'Gislayson',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Gislayson Lacerda no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 18,
+  },
+  {
+    id: 15,
+    slug: 'requerimentos-ver-jader-mariano',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Jader Mariano',
+    menuLabel: 'Jader',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Jader Mariano no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 19,
+  },
+  {
+    id: 16,
+    slug: 'requerimentos-ver-joao-do-povo',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. João do Povo',
+    menuLabel: 'João',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador João do Povo no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 21,
+  },
+  {
+    id: 17,
+    slug: 'requerimentos-ver-joilson-boca-preta',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Joilson Boca Preta',
+    menuLabel: 'Joilson',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Joilson Boca Preta no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 20,
+  },
+  {
+    id: 18,
+    slug: 'requerimentos-ver-jose-de-ribamar',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. José de Ribamar',
+    menuLabel: 'Ribamar',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador José de Ribamar no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 34,
+  },
+  {
+    id: 19,
+    slug: 'requerimentos-ver-lili-benicio',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Lili Benício',
+    menuLabel: 'Lili',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Lili Benício no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 24,
+  },
+  {
+    id: 20,
+    slug: 'requerimentos-ver-marquim-catabriga',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Marquim Catabriga',
+    menuLabel: 'Catabriga',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Marquim Catabriga no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 22,
+  },
+  {
+    id: 21,
+    slug: 'requerimentos-ver-mirleyson-soares',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Mirleyson Soares',
+    menuLabel: 'Mirleyson',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Mirleyson Soares no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 14,
+  },
+  {
+    id: 22,
+    slug: 'requerimentos-ver-mirneuton-soares',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Mirneuton Soares',
+    menuLabel: 'Mirneuton',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Mirneuton Soares no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 35,
+  },
+  {
+    id: 23,
+    slug: 'requerimentos-ver-pedro-vinicius',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Pedro Vinicius',
+    menuLabel: 'Vinicius',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Pedro Vinicius no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 32,
+  },
+  {
+    id: 24,
+    slug: 'requerimentos-ver-romulo-soares',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Rômulo Soares',
+    menuLabel: 'Rômulo',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Rômulo Soares no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 33,
+  },
+  {
+    id: 25,
+    slug: 'requerimentos-ver-sebastiao-fabricio',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Sebastião Fabrício',
+    menuLabel: 'Fabrício',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Sebastião Fabrício no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 30,
+  },
+  {
+    id: 26,
+    slug: 'requerimentos-ver-sipriano-soares',
+    sigla: 'REQ',
+    nome: 'Requerimentos - Ver. Sipriano Soares',
+    menuLabel: 'Sipriano',
+    categoria: 'Requerimentos por Vereador',
+    descricao: 'Requerimentos e solicitações formais apresentados pelo Vereador Sipriano Soares no SAPL Pedro Afonso.',
+    tipoApi: 'materia',
+    saplTipoId: 23,
+  },
+
+  // --- Atos, Emendas e Comissões (5 tipos) ---
+  {
+    id: 27,
+    slug: 'emenda-modificativa',
+    sigla: 'EMOD',
+    nome: 'Emenda Modificativa',
+    menuLabel: 'Emendas',
+    categoria: 'Atos e Comissões',
+    descricao: 'Proposição parlamentar apresentada para alterar parte de projeto de lei em tramitação na Câmara.',
+    tipoApi: 'materia',
+    saplTipoId: 27,
+  },
+  {
+    id: 28,
+    slug: 'parecer-das-comissoes',
+    sigla: 'PAR',
+    nome: 'Parecer das Comissões',
+    menuLabel: 'Pareceres',
+    categoria: 'Atos e Comissões',
+    descricao: 'Pronunciamento formal e técnico emitido por Comissão Permanente sobre a constitucionalidade e mérito de matéria.',
+    tipoApi: 'materia',
+    saplTipoId: 29,
+  },
+  {
+    id: 29,
+    slug: 'edital-de-convocacao',
+    sigla: 'ECONV',
+    nome: 'Edital de Convocação',
+    menuLabel: 'Editais',
+    categoria: 'Atos e Comissões',
+    descricao: 'Instrumento convocatório oficial para sessões extraordinárias, audiências públicas e atos solenes.',
+    tipoApi: 'materia',
+    saplTipoId: 16,
+  },
+  {
+    id: 30,
+    slug: 'oficio',
+    sigla: 'OFC',
+    nome: 'Ofício',
+    menuLabel: 'Ofícios',
+    categoria: 'Atos e Comissões',
+    descricao: 'Comunicação oficial recebida ou expedida no âmbito das atividades institucionais da Câmara Municipal.',
+    tipoApi: 'materia',
+    saplTipoId: 37,
+  },
+  {
+    id: 31,
+    slug: 'mensagem-de-veto',
+    sigla: 'MV',
+    nome: 'Mensagem de Veto',
+    menuLabel: 'Vetos',
+    categoria: 'Atos e Comissões',
+    descricao: 'Comunicação oficial do Chefe do Executivo fundamentando o veto total ou parcial a projeto de lei aprovado.',
+    tipoApi: 'materia',
+    saplTipoId: 38,
+  },
+
+  // --- Normas Jurídicas e Legislação Municipal (7 tipos) ---
+  {
+    id: 32,
+    slug: 'lei-ordinaria',
+    sigla: 'LO',
+    nome: 'Lei Ordinária',
+    menuLabel: 'Ordinárias',
+    categoria: 'Normas e Legislação',
+    descricao: 'Norma jurídica municipal promulgada regulando matérias de competência comum da cidade de Pedro Afonso.',
+    tipoApi: 'norma',
+    saplTipoId: 3,
+  },
+  {
+    id: 33,
+    slug: 'lei-complementar',
+    sigla: 'LC',
+    nome: 'Lei Complementar',
+    menuLabel: 'Complementares',
+    categoria: 'Normas e Legislação',
+    descricao: 'Legislação especial de hierarquia qualificada (estatuto dos servidores, código de obras, plano diretor, etc.).',
+    tipoApi: 'norma',
+    saplTipoId: 2,
+  },
+  {
+    id: 34,
+    slug: 'decreto-legislativo',
+    sigla: 'DL',
+    nome: 'Decreto Legislativo',
+    menuLabel: 'Decretos',
+    categoria: 'Normas e Legislação',
+    descricao: 'Norma de competência exclusiva do Poder Legislativo promulgada pela Mesa Diretora da Câmara.',
+    tipoApi: 'norma',
+    saplTipoId: 1,
+  },
+  {
+    id: 35,
+    slug: 'resolucao',
+    sigla: 'RES',
+    nome: 'Resolução',
+    menuLabel: 'Resoluções',
+    categoria: 'Normas e Legislação',
+    descricao: 'Ato normativo de efeitos internos disciplinando o funcionamento e regência da Câmara Municipal.',
+    tipoApi: 'norma',
+    saplTipoId: 5,
+  },
+  {
+    id: 36,
+    slug: 'lei-organica',
+    sigla: 'LO',
+    nome: 'Lei Orgânica Municipal',
+    menuLabel: 'Orgânica',
+    categoria: 'Normas e Legislação',
+    descricao: 'Diploma fundamental da organização político-administrativa e jurídica do Município de Pedro Afonso - TO.',
+    tipoApi: 'norma',
+    saplTipoId: 39,
+  },
+  {
+    id: 37,
+    slug: 'portaria',
+    sigla: 'POR',
+    nome: 'Portaria',
+    menuLabel: 'Portarias',
+    categoria: 'Normas e Legislação',
+    descricao: 'Ato administrativo que dispõe sobre nomeações, designações de comissões e atos de gestão da Câmara.',
+    tipoApi: 'norma',
+    saplTipoId: 4,
+  },
+  {
+    id: 38,
+    slug: 'regimento-interno',
+    sigla: 'RI',
+    nome: 'Regimento Interno',
+    menuLabel: 'Regimento',
+    categoria: 'Normas e Legislação',
+    descricao: 'Regulamento oficial que estabelece as normas de processo, tramitação e conduta do Poder Legislativo municipal.',
+    tipoApi: 'norma',
+    saplTipoId: 6,
+  },
+];
+
+export function getDocumentTypeBySlug(slug: string): DocumentTypeInfo | undefined {
+  const norm = slug.toLowerCase().trim();
+  return ALL_38_DOCUMENT_TYPES.find(
+    (t) =>
+      t.slug === norm ||
+      t.sigla.toLowerCase() === norm ||
+      t.menuLabel.toLowerCase() === norm ||
+      String(t.id) === norm ||
+      (t.tipoApi === 'materia' && `materia-${t.saplTipoId}` === norm) ||
+      (t.tipoApi === 'norma' && `norma-${t.saplTipoId}` === norm)
+  );
+}
+
+export function getDocumentTypeById(id: number | string): DocumentTypeInfo | undefined {
+  return ALL_38_DOCUMENT_TYPES.find((t) => t.id === Number(id) || t.slug === String(id));
+}
+
+export function getDocumentTypesByCategory(): Record<string, DocumentTypeInfo[]> {
+  const groups: Record<string, DocumentTypeInfo[]> = {
+    'Matérias e Projetos': [],
+    'Requerimentos por Vereador': [],
+    'Normas e Legislação': [],
+    'Atos e Comissões': [],
+  };
+
+  for (const doc of ALL_38_DOCUMENT_TYPES) {
+    if (!groups[doc.categoria]) {
+      groups[doc.categoria] = [];
+    }
+    groups[doc.categoria].push(doc);
+  }
+
+  return groups;
+}
