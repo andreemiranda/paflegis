@@ -1,6 +1,6 @@
-# Guia de Configuração — Envio de E-mail (SMTP Gmail)
+# Guia de Configuração — Envio de E-mail (SMTP Gmail) & Contato
 
-Este guia explica como configurar as variáveis de ambiente necessárias para o formulário de contato do Paflegis funcionar via SMTP do Gmail.
+Este guia explica como configurar as variáveis de ambiente necessárias para o formulário de contato do Paflegis funcionar via SMTP do Gmail e como o protocolo atômico persistente opera.
 
 ---
 
@@ -25,26 +25,24 @@ Este guia explica como configurar as variáveis de ambiente necessárias para o 
 | `EMAIL_APP_PASSWORD` | Senha de app de 16 dígitos (sem espaços) | `abcdefghijklmnop` |
 | `EMAIL_DESTINO` | E-mail que recebe as mensagens enviadas pelos cidadãos | `contato@exemplo.com` |
 
----
-
-## 3. Configuração em Produção (Vercel)
-
-1. Acesse o painel da **Vercel** → Selecione o projeto `paflegis`.
-2. Acesse **Settings** → **Environment Variables**.
-3. Adicione as 3 variáveis (`EMAIL_USER`, `EMAIL_APP_PASSWORD`, `EMAIL_DESTINO`) com escopo **Production** (e **Preview**, se desejar).
-4. Realize um novo deploy para ativar as variáveis.
+> **Nota:** Caso o SMTP não esteja configurado, o endpoint `/api/v1/contato` continua funcionando normalmente: registra a mensagem com segurança no log estruturado e entrega o número de protocolo ao cidadão.
 
 ---
 
-## 4. Configuração em Desenvolvimento Local
+## 3. Protocolo Persistente e Atômico
 
-1. No arquivo `.env.local` (ou `.env`), defina:
-   ```env
-   EMAIL_USER=seu-email@gmail.com
-   EMAIL_APP_PASSWORD=abcdefghijklmnop
-   EMAIL_DESTINO=destino@exemplo.com
-   ```
-2. Inicie o servidor com `npm run dev`.
+O Paflegis gera números de protocolo estruturados no padrão **`ANO-SEQUENCIAL`** (por exemplo, `2026-000001`, `2026-000123`).
+
+- **Incremento Atômico:** O contador é incrementado de forma atômica no armazenamento persistente (`STORAGE_DRIVER=sqlite` ou `file`), nunca em variáveis voláteis de memória ou `/tmp`.
+- **Sobrevive a Cold Starts:** Em ambientes serverless (Vercel) ou containers (Cloud Run), reinicializações ou múltiplas instâncias não repetem nem resetam os protocolos.
+
+---
+
+## 4. Chaves de API e Proteção do Endpoint
+
+- O nome oficial da variável de chaves de API é **`API_KEYS_PERMITIDAS`** (com suporte legado a `API_KEYS`).
+- O formulário de contato web utiliza a sessão segura do frontend (`paflegis_session` assinada via HMAC) e honeypot anti-spam (`_hp`).
+- Requisições externas à API respeitam rate limiting persistente e só aceitam chaves via cabeçalho HTTP (`x-api-key` ou `Authorization: Bearer`), nunca na URL.
 
 ---
 
@@ -63,11 +61,11 @@ curl -s -X POST http://localhost:3000/api/v1/contato \
   }'
 ```
 
-Resposta esperada em caso de sucesso: `{"sucesso":true}`
-
----
-
-## 6. Segurança e Proteção Antispam
-
-- **Proteção Honeypot (`_hp`)**: Submissões automatizadas de bots que preenchem campos ocultos são rejeitadas de forma segura e silenciosa.
-- **Armazenamento Seguro**: Nunca commite credenciais ou senhas de app no controle de versão Git. Use sempre os painéis seguros de variáveis de ambiente.
+Resposta esperada:
+```json
+{
+  "sucesso": true,
+  "protocolo": "2026-000001",
+  "mensagem": "Mensagem recebida e registrada com sucesso."
+}
+```

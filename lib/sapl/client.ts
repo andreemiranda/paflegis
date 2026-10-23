@@ -214,4 +214,59 @@ export const api = {
       body: JSON.stringify(data),
     });
   },
+
+  // Novos recursos nativos do SAPL
+  getParlamentares: (params?: { page?: number; search?: string }): Promise<{ count: number; results: any[] }> => {
+    const q = new URLSearchParams();
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return paflegisFetch(`/api/parlamentares/parlamentar/${qs}`);
+  },
+
+  getParlamentarById: (id: number | string): Promise<any> => {
+    return paflegisFetch(`/api/parlamentares/parlamentar/${id}/`);
+  },
+
+  getComissoes: (params?: { page?: number; search?: string }): Promise<{ count: number; results: any[] }> => {
+    const q = new URLSearchParams();
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return paflegisFetch(`/api/comissoes/comissao/${qs}`);
+  },
+
+  getComissaoById: (id: number | string): Promise<any> => {
+    return paflegisFetch(`/api/comissoes/comissao/${id}/`);
+  },
+
+  getAudiencias: (params?: { page?: number; search?: string }): Promise<{ count: number; results: any[] }> => {
+    const q = new URLSearchParams();
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return paflegisFetch(`/api/audiencia/audienciapublica/${qs}`);
+  },
+
+  getAudienciaById: (id: number | string): Promise<any> => {
+    return paflegisFetch(`/api/audiencia/audienciapublica/${id}/`);
+  },
+
+  getGenericResource: (modulo: string, recurso: string, params?: Record<string, any>): Promise<any> => {
+    const q = new URLSearchParams();
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined && v !== null && v !== '') {
+          q.set(k, String(v));
+        }
+      }
+    }
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return paflegisFetch(`/api/${modulo}/${recurso}/${qs}`);
+  },
+
+  getSyncStatus: (): Promise<any> => {
+    return paflegisFetch('/api/v1/sync/status');
+  },
 };
+

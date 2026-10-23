@@ -3,28 +3,17 @@
  * Compatível com Next.js Node.js runtime e Vercel Serverless.
  */
 
-// 1. Configuração de URLs Base e Domínios com suporte pleno a variáveis de ambiente
-const rawApiBase =
-  process.env.SAPL_API_BASE ||
-  process.env.NEXT_PUBLIC_SAPL_API_BASE ||
-  'https://sapl.pedroafonso.to.leg.br/api';
-export const SAPL_API_BASE = rawApiBase.trim().replace(/\/+$/, '');
+import { getConfig } from '@/lib/config';
+import { sanitizeIpInString, sanitizeAndRewriteResponse } from '@/lib/sanitization';
 
-const rawPublicDomain =
-  process.env.SAPL_PUBLIC_DOMAIN ||
-  process.env.NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN ||
-  'https://sapl.pedroafonso.to.leg.br';
-export const SAPL_PUBLIC_DOMAIN = rawPublicDomain.trim().replace(/\/+$/, '');
-
-const rawOriginIp =
-  process.env.SAPL_ORIGIN_IP ||
-  process.env.NEXT_PUBLIC_SAPL_ORIGIN_IP ||
-  'http://64.23.167.191';
-export const SAPL_ORIGIN_IP = rawOriginIp.trim().replace(/\/+$/, '');
+// URLs Base e Domínios extraídos da configuração central
+export const SAPL_API_BASE = getConfig().saplApiBase;
+export const SAPL_PUBLIC_DOMAIN = getConfig().saplPublicDomain;
+export const SAPL_ORIGIN_IP = getConfig().saplOriginIp;
 
 export type LogLevel = 'INFO' | 'WARN' | 'ERROR';
 
-/** Structured JSON logger para rastreabilidade no painel da Vercel. */
+/** Structured JSON logger para rastreabilidade no painel da Vercel ou Cloud Run. */
 export function slog(level: LogLevel, ctx: string, msg: string, err?: unknown): void {
   const entry: Record<string, unknown> = { ts: new Date().toISOString(), level, ctx, msg };
   if (err !== undefined) entry.err = err instanceof Error ? err.message : String(err);
@@ -35,55 +24,33 @@ export function slog(level: LogLevel, ctx: string, msg: string, err?: unknown): 
 }
 
 /**
- * Substitui qualquer ocorrência de IP bruto (ex: http://64.23.167.191 ou IPv4 local)
- * pelas variáveis de ambiente configuradas para domínio e base da API pública oficial.
+ * Substitui qualquer ocorrência de IP bruto pelo domínio configurado.
  */
 export function replaceIpWithDomain(rawStr: string): string {
-  if (!rawStr || typeof rawStr !== 'string') return '';
-
-  let sanitized = rawStr;
-
-  // Substituir IP de origem específico com /api/
-  sanitized = sanitized.replace(/https?:\/\/64\.23\.167\.191\/api(\/|\b|$)/gi, `${SAPL_API_BASE}$1`);
-  // Substituir IP de origem específico em links de media, arquivos ou geral
-  sanitized = sanitized.replace(/https?:\/\/64\.23\.167\.191(\/|\b|$)/gi, `${SAPL_PUBLIC_DOMAIN}$1`);
-
-  // Substituir qualquer outro IPv4 em formato de URL retornado pelo servidor legado
-  sanitized = sanitized.replace(
-    /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?\/api(\/|\b|$)/gi,
-    `${SAPL_API_BASE}$1`
-  );
-  sanitized = sanitized.replace(
-    /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?(\/|\b|$)/gi,
-    `${SAPL_PUBLIC_DOMAIN}$1`
-  );
-
-  return sanitized;
+  return sanitizeIpInString(rawStr);
 }
 
 /**
- * Normaliza e sanitiza recursivamente qualquer estrutura de dados (string, array, objeto)
- * retornada pela API do SAPL, garantindo que nenhum IP bruto 64.23.167.191 persista.
+ * Normaliza e sanitiza recursivamente qualquer estrutura de dados retornada pela API do SAPL.
  */
-export function sanitizeSaplData<T>(input: T): T {
+export function sanitizeSaplData<T>(input: T, appOrigin = ''): T {
   if (input === null || input === undefined) return input;
-
+  if (appOrigin) {
+    return sanitizeAndRewriteResponse(input, appOrigin);
+  }
   if (typeof input === 'string') {
-    return replaceIpWithDomain(input) as unknown as T;
+    return sanitizeIpInString(input) as unknown as T;
   }
-
   if (Array.isArray(input)) {
-    return input.map((item) => sanitizeSaplData(item)) as unknown as T;
+    return input.map((item) => sanitizeSaplData(item, appOrigin)) as unknown as T;
   }
-
   if (typeof input === 'object') {
     const output: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(input as Record<string, unknown>)) {
-      output[key] = sanitizeSaplData(val);
+      output[key] = sanitizeSaplData(val, appOrigin);
     }
     return output as T;
   }
-
   return input;
 }
 

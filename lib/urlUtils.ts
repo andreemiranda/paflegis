@@ -49,37 +49,20 @@ export function getYouTubeWatchUrl(url?: string | null): string | null {
   return null;
 }
 
-const rawBaseDomain =
-  process.env.NEXT_PUBLIC_SAPL_BASE_DOMAIN ||
-  process.env.NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN ||
-  process.env.SAPL_PUBLIC_DOMAIN ||
-  'https://sapl.pedroafonso.to.leg.br';
-export const SAPL_BASE_DOMAIN = rawBaseDomain.trim().replace(/\/+$/, '');
+import { getConfig } from '@/lib/config';
+import { sanitizeIpInString } from '@/lib/sanitization';
 
-const rawApiBase =
-  process.env.NEXT_PUBLIC_SAPL_API_BASE ||
-  process.env.SAPL_API_BASE ||
-  'https://sapl.pedroafonso.to.leg.br/api';
-export const SAPL_API_BASE = rawApiBase.trim().replace(/\/+$/, '');
+export const getSaplBaseDomain = () => getConfig().saplPublicDomain;
+export const getSaplApiBase = () => getConfig().saplApiBase;
+
+export const SAPL_BASE_DOMAIN = getConfig().saplPublicDomain;
+export const SAPL_API_BASE = getConfig().saplApiBase;
 
 /**
  * Converte IP bruto retornado pelo servidor legado SAPL para o domínio público oficial.
  */
 export function replaceIpWithDomain(rawStr: string): string {
-  if (!rawStr || typeof rawStr !== 'string') return '';
-  let sanitized = rawStr
-    .replace(/https?:\/\/64\.23\.167\.191\/api(\/|\b|$)/gi, `${SAPL_API_BASE}$1`)
-    .replace(/https?:\/\/64\.23\.167\.191(\/|\b|$)/gi, `${SAPL_BASE_DOMAIN}$1`);
-
-  sanitized = sanitized.replace(
-    /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?\/api(\/|\b|$)/gi,
-    `${SAPL_API_BASE}$1`
-  );
-  sanitized = sanitized.replace(
-    /https?:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?(\/|\b|$)/gi,
-    `${SAPL_BASE_DOMAIN}$1`
-  );
-  return sanitized;
+  return sanitizeIpInString(rawStr);
 }
 
 export function normalizeDocumentUrl(rawUrl: string | null | undefined): string {
@@ -97,27 +80,28 @@ export function normalizeDocumentUrl(rawUrl: string | null | undefined): string 
     return trimmed;
   }
 
-  const cleaned = replaceIpWithDomain(trimmed);
+  const cleaned = sanitizeIpInString(trimmed);
+  const baseDomain = getConfig().saplPublicDomain;
 
   try {
     if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) {
       const parsed = new URL(cleaned);
       if (
         parsed.hostname.includes('sapl') ||
-        parsed.hostname.includes('pedroafonso') ||
+        parsed.hostname.includes('leg.br') ||
         /^\d+\.\d+\.\d+\.\d+$/.test(parsed.hostname) ||
         parsed.hostname === 'localhost'
       ) {
-        return `${SAPL_BASE_DOMAIN}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        return `${baseDomain}${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
       return cleaned;
     }
   } catch {}
 
   if (cleaned.startsWith('/')) {
-    return `${SAPL_BASE_DOMAIN}${cleaned}`;
+    return `${baseDomain}${cleaned}`;
   }
-  return `${SAPL_BASE_DOMAIN}/${cleaned}`;
+  return `${baseDomain}/${cleaned}`;
 }
 
 export async function copyToClipboard(text: string): Promise<boolean> {

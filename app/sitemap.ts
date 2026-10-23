@@ -1,7 +1,9 @@
 import { MetadataRoute } from 'next';
+import { getConfig } from '@/lib/config';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://paflegis.vercel.app';
+  const config = getConfig();
+  const baseUrl = config.appPublicUrl || 'https://paflegis.vercel.app';
   const now = new Date();
 
   const staticPages = [
@@ -9,6 +11,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/materias',
     '/normas',
     '/sessoes',
+    '/parlamentares',
+    '/comissoes',
+    '/audiencias',
+    '/busca',
+    '/documentos',
     '/contato',
     '/sobre',
     '/api-docs',
@@ -24,7 +31,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return staticPages.map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: now,
-    changeFrequency: path === '' || path === '/materias' || path === '/normas' || path === '/sessoes' ? 'daily' : 'monthly',
-    priority: path === '' ? 1.0 : path.startsWith('/privacidade') || path.startsWith('/termos') ? 0.3 : 0.8,
+    changeFrequency:
+      path === '' || path === '/materias' || path === '/normas' || path === '/sessoes'
+        ? 'daily'
+        : 'monthly',
+    priority:
+      path === ''
+        ? 1.0
+        : path.startsWith('/privacidade') || path.startsWith('/termos')
+        ? 0.3
+        : 0.8,
   }));
 }

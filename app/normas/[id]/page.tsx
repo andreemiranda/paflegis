@@ -150,7 +150,7 @@ export default function NormaDetailPage() {
           </div>
 
           {/* Document Access Buttons */}
-          <div className="d-flex flex-wrap gap-2">
+          <div className="d-flex flex-wrap gap-2 mb-2">
             {norma.texto_integral_url && (
               <button
                 onClick={() => setPreviewDoc({ url: norma.texto_integral_url!, title: `${norma.tipo} ${norma.numero}/${norma.ano}` })}
@@ -170,6 +170,28 @@ export default function NormaDetailPage() {
                 <ExternalLink size={16} /> Abrir em Nova Guia
               </a>
             )}
+
+            <a
+              href={`/api/norma/normajuridica/${id}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-secondary d-flex align-items-center gap-1.5"
+            >
+              <BookOpen size={15} /> <span>Endpoint na API Nativa</span>
+            </a>
+          </div>
+
+          <div className="mt-3 pt-3 border-top d-flex justify-content-between align-items-center small text-muted">
+            <span>Fonte de dados: SAPL Oficial</span>
+            <a
+              href={`https://sapl.pedroafonso.to.leg.br/norma/${id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-success text-decoration-none d-flex align-items-center gap-1"
+            >
+              <span>Ver no portal oficial do SAPL</span>
+              <ExternalLink size={13} />
+            </a>
           </div>
         </div>
       </div>

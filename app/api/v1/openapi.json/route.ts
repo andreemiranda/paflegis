@@ -1,6 +1,14 @@
-import { NextResponse } from 'next/server';
-import { openApiSpec } from '@/lib/openApiSpec';
+import { NextRequest, NextResponse } from 'next/server';
+import { getDynamicOpenApiSpec } from '@/lib/openApiSpec';
+import { resolveRequestOrigin } from '@/lib/config';
 
-export async function GET() {
-  return NextResponse.json(openApiSpec);
+export async function GET(req: NextRequest) {
+  const origin = resolveRequestOrigin(req.headers);
+  const spec = getDynamicOpenApiSpec(origin);
+  return NextResponse.json(spec, {
+    headers: {
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
 }

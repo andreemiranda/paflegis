@@ -1,16 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Landmark, ExternalLink, Map } from 'lucide-react';
+import { Landmark, ExternalLink, Map, RefreshCw, CheckCircle2 } from 'lucide-react';
 import SitemapModal from './SitemapModal';
+import { api } from '@/lib/sapl/client';
 
 export default function Footer() {
   const [showSitemap, setShowSitemap] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<any>(null);
+
+  useEffect(() => {
+    api.getSyncStatus().then(setSyncStatus).catch(() => {});
+  }, []);
 
   return (
-    <>
-      <footer className="bg-dark text-white-50 pt-5 pb-3 mt-auto border-top border-secondary">
+    <div>
+      <footer className="bg-dark text-white-50 pt-5 pb-3 mt-auto border-top border-secondary w-100 overflow-hidden">
         <div className="container">
           <div className="row g-4">
             {/* Coluna 1: Sobre o Projeto */}
@@ -19,14 +25,16 @@ export default function Footer() {
                 <div className="bg-primary text-white p-2 rounded-3 d-flex align-items-center justify-content-center">
                   <Landmark size={20} />
                 </div>
-                <span className="fs-5 fw-bold text-white">Paflegis</span>
+                <span className="fs-5 fw-bold text-white">
+                  {syncStatus?.fonte_configurada?.site_name || 'Paflegis'}
+                </span>
               </div>
               <p className="small text-white-50 mb-3">
-                Plataforma cívica e independente para consulta e transparência das atividades legislativas da Câmara Municipal de Pedro Afonso - TO.
+                Plataforma cívica e independente para consulta e transparência das atividades legislativas da {syncStatus?.fonte_configurada?.org_name || 'Câmara Municipal'}.
               </p>
               <div className="p-3 rounded-2 small text-light mb-0 border border-secondary border-opacity-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.25)' }}>
                 <strong className="text-white d-block mb-1">Nota de Independência:</strong>
-                <span className="text-white-50">O Paflegis utiliza dados públicos oficiais e abertos. Não é um canal governamental ou oficial.</span>
+                <span className="text-white-50">O Paflegis utiliza dados públicos abertos. Não é um canal governamental ou oficial.</span>
               </div>
             </div>
 
@@ -38,8 +46,10 @@ export default function Footer() {
                 <li><Link href="/materias" className="text-white-50 text-decoration-none">Matérias Legislativas</Link></li>
                 <li><Link href="/normas" className="text-white-50 text-decoration-none">Normas Jurídicas</Link></li>
                 <li><Link href="/sessoes" className="text-white-50 text-decoration-none">Sessões Plenárias</Link></li>
-                <li><Link href="/sobre" className="text-white-50 text-decoration-none">Sobre o Paflegis</Link></li>
-                <li><Link href="/contato" className="text-white-50 text-decoration-none">Fale Conosco</Link></li>
+                <li><Link href="/parlamentares" className="text-white-50 text-decoration-none">Vereadores</Link></li>
+                <li><Link href="/comissoes" className="text-white-50 text-decoration-none">Comissões</Link></li>
+                <li><Link href="/audiencias" className="text-white-50 text-decoration-none">Audiências</Link></li>
+                <li><Link href="/busca" className="text-white-50 text-decoration-none">Busca Global</Link></li>
               </ul>
             </div>
 
@@ -52,7 +62,7 @@ export default function Footer() {
                 <li><Link href="/cookies" className="text-white-50 text-decoration-none">Política de Cookies</Link></li>
                 <li><Link href="/termos" className="text-white-50 text-decoration-none">Termos de Uso</Link></li>
                 <li><Link href="/aviso-legal" className="text-white-50 text-decoration-none">Aviso Legal</Link></li>
-                <li><Link href="/dados-publicos" className="text-white-50 text-decoration-none">Dados Públicos e Licença</Link></li>
+                <li><Link href="/dados-publicos" className="text-white-50 text-decoration-none">Catálogo de Dados Públicos</Link></li>
               </ul>
             </div>
 
@@ -64,16 +74,36 @@ export default function Footer() {
                 <li><Link href="/seo-audit" className="text-white-50 text-decoration-none">Auditoria de SEO & Conectividade</Link></li>
                 <li>
                   <a
-                    href="https://sapl.pedroafonso.to.leg.br"
+                    href={syncStatus?.fonte_configurada?.sapl_public_domain || 'https://sapl.pedroafonso.to.leg.br'}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-white-50 text-decoration-none d-inline-flex align-items-center gap-1"
                   >
-                    <span>SAPL Oficial Pedro Afonso</span>
+                    <span>SAPL Oficial da Câmara</span>
                     <ExternalLink size={12} />
                   </a>
                 </li>
               </ul>
+
+              {/* Status de Sincronização do Espelho Local */}
+              {syncStatus && (
+                <div className="p-2.5 rounded bg-black bg-opacity-25 border border-secondary border-opacity-50 small mb-3">
+                  <div className="d-flex align-items-center justify-content-between mb-1">
+                    <span className="text-white fw-semibold d-flex align-items-center gap-1" style={{ fontSize: '0.78rem' }}>
+                      <CheckCircle2 size={13} className="text-success" /> Espelho Local Ativo
+                    </span>
+                    <span className="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50" style={{ fontSize: '0.65rem' }}>
+                      {syncStatus.total_registros_espelho || 0} registros
+                    </span>
+                  </div>
+                  <div className="text-white-50" style={{ fontSize: '0.72rem' }}>
+                    Última sincronização:{' '}
+                    {syncStatus.ultima_sincronizacao
+                      ? new Date(syncStatus.ultima_sincronizacao).toLocaleString('pt-BR')
+                      : 'Pendente / Ao vivo'}
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() => setShowSitemap(true)}
@@ -90,7 +120,7 @@ export default function Footer() {
           {/* Links Auxiliares de Navegação do Rodapé */}
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 small text-white-50 mb-3">
             <div>
-              &copy; {new Date().getFullYear()} Paflegis · Informações Legislativas de Pedro Afonso - TO
+              &copy; {new Date().getFullYear()} {syncStatus?.fonte_configurada?.site_name || 'Paflegis'} · Transparência Legislativa
             </div>
             <div className="d-flex gap-3">
               <Link href="/privacidade" className="text-white-50 text-decoration-none">Privacidade</Link>
@@ -101,63 +131,24 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Última Linha na Parte Inferior do Rodapé: Mensagem e Imagens com Fundo Transparente */}
+          {/* Licença */}
           <div className="pt-3 border-top border-secondary border-opacity-50 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 text-center text-md-start">
             <div className="small text-white-50">
-              Conteúdo e dados sob licença{' '}
-              <a
-                href="https://creativecommons.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-info text-decoration-none fw-semibold"
-              >
-                Creative Commons 4.0
-              </a>{' '}
+              Conteúdo sob licença livre{' '}
               <a
                 href="https://creativecommons.org/licenses/by/4.0/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-info text-decoration-none fw-semibold"
               >
-                Atribuir Fonte - Compartilhar Igual
-              </a>
-            </div>
-
-            <div className="d-flex align-items-center gap-3 flex-shrink-0">
-              <a
-                href="http://www.interlegis.leg.br/"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Interlegis"
-                className="d-inline-flex align-items-center text-decoration-none"
-              >
-                <img
-                  src="https://sapl.pedroafonso.to.leg.br/static/sapl/frontend/img/logo_interlegis.png"
-                  alt="Interlegis"
-                  style={{ height: 26, width: 'auto', display: 'block' }}
-                  referrerPolicy="no-referrer"
-                />
-              </a>
-              <a
-                href="https://sapl.pedroafonso.to.leg.br/static/sapl/frontend/img/logo_cc.png"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Creative Commons"
-                className="d-inline-flex align-items-center text-decoration-none"
-              >
-                <img
-                  src="https://sapl.pedroafonso.to.leg.br/static/sapl/frontend/img/logo_cc.png"
-                  alt="Creative Commons"
-                  style={{ height: 26, width: 'auto', display: 'block' }}
-                  referrerPolicy="no-referrer"
-                />
-              </a>
+                Creative Commons Atribuição 4.0 Internacional (CC BY 4.0)
+              </a>.
             </div>
           </div>
         </div>
       </footer>
 
       {showSitemap && <SitemapModal onClose={() => setShowSitemap(false)} />}
-    </>
+    </div>
   );
 }

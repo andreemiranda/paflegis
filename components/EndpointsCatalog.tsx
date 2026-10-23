@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Copy,
@@ -261,36 +262,46 @@ export default function EndpointsCatalog({
                   </div>
 
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    <Link
+                      href={`/dados-publicos/${item.module}/${item.key.includes('/') ? item.key.split('/')[1] : item.key}`}
+                      className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2"
+                      style={{ fontSize: '0.75rem' }}
+                      title="Explorar dados públicos desta coleção"
+                    >
+                      <Database className="w-3.5 h-3.5" />
+                      <span>Explorar</span>
+                    </Link>
+
+                    <a
+                      href={`/api/${item.key}/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 py-1 px-2"
+                      style={{ fontSize: '0.75rem' }}
+                      title="Abrir endpoint espelho nativo"
+                    >
+                      <Code2 className="w-3.5 h-3.5" />
+                      <span>API</span>
+                    </a>
+
                     <button
                       onClick={() => handleCopy(displayUrl, item.key)}
                       title="Copiar URL"
-                      className="p-1.5 rounded-md hover:bg-gray-200 text-gray-600 transition inline-flex items-center gap-1 text-xs"
+                      className="btn btn-sm btn-light border py-1 px-2 d-inline-flex align-items-center gap-1"
+                      style={{ fontSize: '0.75rem' }}
                     >
                       {isCopied ? (
                         <>
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span className="text-emerald-700">Copiado</span>
+                          <Check className="w-3.5 h-3.5 text-success" />
+                          <span className="text-success">Copiado</span>
                         </>
                       ) : (
                         <>
-                          <Copy className="w-3.5 h-3.5" />
+                          <Copy className="w-3.5 h-3.5 text-muted" />
                           <span className="hidden sm:inline">Copiar</span>
                         </>
                       )}
                     </button>
-
-                    {viewMode === 'resolved' && (
-                      <a
-                        href={item.resolvedUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Abrir no SAPL (JSON público)"
-                        className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-700 transition inline-flex items-center gap-1 text-xs"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Acessar</span>
-                      </a>
-                    )}
                   </div>
                 </div>
               );

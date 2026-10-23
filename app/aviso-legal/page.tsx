@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ShieldAlert, ExternalLink } from 'lucide-react';
+import { getConfig } from '@/lib/config';
 
 export const metadata = {
   title: 'Aviso Legal & Isenção de Responsabilidade',
@@ -8,6 +9,8 @@ export const metadata = {
 };
 
 export default function AvisoLegalPage() {
+  const config = getConfig();
+
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
@@ -18,7 +21,7 @@ export default function AvisoLegalPage() {
             </span>
             <h1 className="h2 fw-bold text-dark mb-2">Aviso Legal</h1>
             <p className="text-muted small mb-0">
-              Versão 1.0 · Última atualização: Outubro de 2026
+              Versão 1.1 · Conforme a Lei de Acesso à Informação
             </p>
           </div>
 
@@ -26,14 +29,14 @@ export default function AvisoLegalPage() {
             <div className="alert alert-warning border-0 d-flex align-items-start gap-3 p-3 mb-4">
               <ShieldAlert size={24} className="text-warning flex-shrink-0 mt-1" />
               <div className="small">
-                <strong>ATENÇÃO:</strong> O Paflegis é uma aplicação web cívica de iniciativa privada e independente. Não representa, não fala em nome e não substitui a Câmara Municipal de Pedro Afonso - TO.
+                <strong>ATENÇÃO:</strong> O {config.siteName} é uma aplicação web cívica de iniciativa privada e independente. Não representa, não fala em nome e não substitui a {config.orgName} ({config.orgCity} - {config.orgUf}).
               </div>
             </div>
 
             <section className="mb-4">
               <h4 className="fw-bold text-dark fs-5 mb-3">1. Natureza Independente</h4>
               <p className="text-muted small lh-lg">
-                O aplicativo Paflegis atua exclusivamente como um agregador e organizador visual de dados públicos, facilitando a navegação e a experiência de busca do cidadão.
+                O aplicativo {config.siteName} atua exclusivamente como um agregador e organizador visual de dados públicos, facilitando a navegação e a experiência de busca do cidadão.
               </p>
             </section>
 
@@ -44,12 +47,12 @@ export default function AvisoLegalPage() {
               </p>
               <div className="p-3 bg-light rounded-3 small">
                 <a
-                  href={process.env.NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN || "https://sapl.pedroafonso.to.leg.br"}
+                  href={config.saplPublicDomain}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="fw-bold text-primary text-decoration-none d-inline-flex align-items-center gap-1"
                 >
-                  <span>Portal Oficial SAPL Pedro Afonso - TO</span>
+                  <span>Portal Oficial SAPL {config.orgName}</span>
                   <ExternalLink size={14} />
                 </a>
               </div>

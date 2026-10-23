@@ -177,3 +177,19 @@ export function buildTemplateEndpointsMap(prefix = '[NEXT_PUBLIC_SAPL_PUBLIC_DOM
   }
   return map;
 }
+
+export const SAPL_ENDPOINTS_LIST = ALL_129_SAPL_ENDPOINT_KEYS.map((key) => {
+  const parts = key.split('/');
+  const mod = parts[0] || 'geral';
+  return {
+    key: key.replace('/', ':'),
+    url: `https://sapl.pedroafonso.to.leg.br/api/${key}/`,
+    path: `/api/${key}/`,
+    module: mod,
+    module_title: MODULE_NAMES[mod] || mod.toUpperCase(),
+  };
+});
+
+export const SAPL_ENDPOINTS_MAP: Record<string, string> = Object.fromEntries(
+  SAPL_ENDPOINTS_LIST.map((ep) => [ep.key, ep.url])
+);

@@ -55,7 +55,7 @@ export default function HomePage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      router.push(`/materias?busca=${encodeURIComponent(searchTerm.trim())}`);
+      router.push(`/busca?q=${encodeURIComponent(searchTerm.trim())}`);
     }
   };
 
@@ -68,14 +68,14 @@ export default function HomePage() {
             <div className="col-lg-8 mx-auto text-center">
               <div className="d-inline-flex align-items-center bg-white text-dark px-3.5 py-1.5 rounded-pill shadow-sm mb-3 border border-light">
                 <span className="fw-bold text-dark" style={{ fontSize: '0.86rem' }}>
-                  Portal Cívico Independente de Pedro Afonso - TO
+                  Portal Cívico de Consulta & Transparência Legislativa
                 </span>
               </div>
               <h1 className="display-5 fw-bold mb-3">
                 Transparência e Consulta Legislativa Descomplicada
               </h1>
               <p className="lead text-white-50 mb-4">
-                Acesse projetos de lei, normas municipais, pautas e gravações das sessões plenárias da Câmara Municipal de Pedro Afonso com rapidez e clareza.
+                Acesse projetos de lei, normas municipais, pautas, vereadores e gravações das sessões plenárias com rapidez e clareza.
               </p>
 
               {/* Quick Search Box */}
@@ -104,6 +104,15 @@ export default function HomePage() {
       {/* Main Content */}
       <div className="container py-5">
         {/* Metric Stats Cards */}
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h4 className="fw-bold text-dark mb-0 fs-6">Estatísticas Consolidadas do Município</h4>
+          {stats?.atualizado_em && (
+            <span className="text-muted small">
+              Atualizado em: {new Date(stats.atualizado_em).toLocaleDateString('pt-BR')} ({stats.fonte === 'upstream-live' ? 'Ao vivo' : stats.fonte === 'mirror-storage' ? 'Espelho local' : 'Em sincronização'})
+            </span>
+          )}
+        </div>
+
         <div className="row g-3 mb-5">
           <div className="col-md-4">
             <div className="card border-0 shadow-sm p-3 h-100 card-hover">

@@ -1,40 +1,27 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getConfig } from '../lib/config/index.js';
+import { sanitizeIpInString } from '../lib/sanitization/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PREFETCH_FILE = path.join(__dirname, '..', 'dist', 'prefetch-fallback.json');
 
-const rawApiBase =
-  process.env.SAPL_API_BASE ||
-  process.env.NEXT_PUBLIC_SAPL_API_BASE ||
-  'https://sapl.pedroafonso.to.leg.br/api';
-const SAPL_API_BASE = rawApiBase.trim().replace(/\/+$/, '');
-
-const rawPublic =
-  process.env.SAPL_PUBLIC_DOMAIN ||
-  process.env.NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN ||
-  'https://sapl.pedroafonso.to.leg.br';
-const SAPL_PUBLIC = rawPublic.trim().replace(/\/+$/, '');
-
-function replaceIpWithDomain(rawStr: string): string {
-  if (!rawStr) return '';
-  return rawStr
-    .replace(/https?:\/\/64\.23\.167\.191\/api(\/|\b|$)/gi, `${SAPL_API_BASE}$1`)
-    .replace(/https?:\/\/64\.23\.167\.191(\/|\b|$)/gi, `${SAPL_PUBLIC}$1`);
-}
+const config = getConfig();
+const SAPL_API_BASE = config.saplApiBase;
+const SAPL_PUBLIC = config.saplPublicDomain;
 
 function normalizeUrl(raw?: string | null): string {
   if (!raw) return '';
-  const s = replaceIpWithDomain(raw.trim());
+  const s = sanitizeIpInString(raw.trim());
   if (s.startsWith('http://') || s.startsWith('https://')) return s;
   if (s.startsWith('/')) return `${SAPL_PUBLIC}${s}`;
   return `${SAPL_PUBLIC}/${s}`;
 }
 
 async function safeFetch(url: string) {
-  const targetUrl = replaceIpWithDomain(url);
+  const targetUrl = sanitizeIpInString(url);
   for (let i = 0; i < 3; i++) {
     try {
       const res = await fetch(targetUrl, { signal: AbortSignal.timeout(10000) });
@@ -48,7 +35,7 @@ async function safeFetch(url: string) {
 }
 
 async function main() {
-  console.log('Prefetching fallback data from SAPL with IP sanitization...');
+  console.log(`Prefetching fallback data from ${SAPL_API_BASE} with dynamic IP sanitization...`);
   const data: any = {};
 
   const m = await safeFetch(`${SAPL_API_BASE}/materia/materialegislativa/?page_size=10`);

@@ -153,7 +153,7 @@ export default function SessaoDetailPage() {
           </div>
 
           {/* Document & Video Actions */}
-          <div className="d-flex flex-wrap gap-2">
+          <div className="d-flex flex-wrap gap-2 mb-2">
             {sessao.youtube_url && (
               <button
                 onClick={() => setVideoModal({ url: sessao.youtube_url!, title: `${sessao.tipo} Nº ${sessao.numero}/${sessao.ano}` })}
@@ -180,6 +180,28 @@ export default function SessaoDetailPage() {
                 <FileText size={16} /> Ver Ata
               </button>
             )}
+
+            <a
+              href={`/api/sessao/sessaoplenaria/${id}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-secondary d-flex align-items-center gap-1.5"
+            >
+              <Video size={15} /> <span>Endpoint na API Nativa</span>
+            </a>
+          </div>
+
+          <div className="mt-3 pt-3 border-top d-flex justify-content-between align-items-center small text-muted">
+            <span>Fonte de dados: SAPL Oficial</span>
+            <a
+              href={`https://sapl.pedroafonso.to.leg.br/sessao/${id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-danger text-decoration-none d-flex align-items-center gap-1"
+            >
+              <span>Ver no portal oficial do SAPL</span>
+              <ExternalLink size={13} />
+            </a>
           </div>
         </div>
       </div>

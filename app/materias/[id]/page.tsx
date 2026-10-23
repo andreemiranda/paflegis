@@ -17,6 +17,7 @@ import {
   ExternalLink,
   RefreshCw,
   AlertCircle,
+  Code,
 } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
 import { MateriaLegislativa } from '@/types';
@@ -151,7 +152,7 @@ export default function MateriaDetailPage() {
           </div>
 
           {/* Document Access Buttons */}
-          <div className="d-flex flex-wrap gap-2">
+          <div className="d-flex flex-wrap gap-2 mb-2">
             {materia.texto_original_url && (
               <button
                 onClick={() => setPreviewDoc({ url: materia.texto_original_url!, title: `${materia.tipo} ${materia.numero}/${materia.ano}` })}
@@ -171,6 +172,28 @@ export default function MateriaDetailPage() {
                 <ExternalLink size={16} /> Abrir em Nova Guia
               </a>
             )}
+
+            <a
+              href={`/api/materia/materialegislativa/${id}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-secondary d-flex align-items-center gap-1.5"
+            >
+              <Code size={15} /> <span>Endpoint na API Nativa</span>
+            </a>
+          </div>
+
+          <div className="mt-3 pt-3 border-top d-flex justify-content-between align-items-center small text-muted">
+            <span>Fonte de dados: SAPL Oficial</span>
+            <a
+              href={`https://sapl.pedroafonso.to.leg.br/materia/${id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary text-decoration-none d-flex align-items-center gap-1"
+            >
+              <span>Ver no portal oficial do SAPL</span>
+              <ExternalLink size={13} />
+            </a>
           </div>
         </div>
       </div>

@@ -2,32 +2,44 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
-import {
-  checkSaplHealth,
-  SAPL_API_BASE,
-  SAPL_PUBLIC_DOMAIN,
-  SAPL_ORIGIN_IP,
-} from '@/lib/sapl/backend';
+import { checkSaplHealth } from '@/lib/sapl/backend';
 import { getAuthDiagnostics } from '@/lib/auth/apiKeyAuth';
+import { getConfig } from '@/lib/config';
+import { getStorage } from '@/lib/storage';
 
 export async function GET() {
-  const { reachable, latencyMs } = await checkSaplHealth();
-  const auth = getAuthDiagnostics();
+  try {
+    const config = getConfig();
+    const { reachable, latencyMs } = await checkSaplHealth();
+    const auth = getAuthDiagnostics();
+    const storage = getStorage();
+    const syncStatus = await storage.getSyncStatus();
 
-  return NextResponse.json({
-    status: reachable ? 'ok' : 'degraded',
-    sapl: reachable ? 'reachable' : 'unreachable',
-    sapl_latency_ms: latencyMs,
-    sapl_endpoint: SAPL_API_BASE,
-    sapl_public_domain: SAPL_PUBLIC_DOMAIN,
-    sapl_origin_ip_sanitized: SAPL_ORIGIN_IP,
-    ip_replacement_active: true,
-    auth: {
-      apiKeysConfigured: auth.apiKeysConfigured,
-      strategy: auth.strategy,
-      status: 'synchronized',
-    },
-    env: process.env.NODE_ENV || 'production',
-    time: new Date().toISOString(),
-  });
+    return NextResponse.json({
+      status: reachable ? 'ok' : 'degraded',
+      sapl: reachable ? 'reachable' : 'unreachable',
+      sapl_latency_ms: latencyMs,
+      sapl_endpoint: config.saplApiBase,
+      sapl_public_domain: config.saplPublicDomain,
+      ip_replacement_active: true,
+      auth: {
+        strategy: auth.strategy,
+        mode: auth.mode,
+        configured: auth.authConfigured,
+      },
+      sync: {
+        ultima_sincronizacao: syncStatus.lastSyncAt ? new Date(syncStatus.lastSyncAt).toISOString() : null,
+        em_progresso: syncStatus.inProgress,
+        total_espelho: syncStatus.totalRecords,
+      },
+      time: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('[/api/v1/health] Error:', error);
+    return NextResponse.json({
+      status: 'error',
+      message: error?.message || String(error),
+      stack: error?.stack,
+    }, { status: 500 });
+  }
 }

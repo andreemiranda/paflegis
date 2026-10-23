@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  paflegis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: paflegis-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - SAPL_API_BASE=https://sapl.pedroafonso.to.leg.br/api
+      - SAPL_PUBLIC_DOMAIN=https://sapl.pedroafonso.to.leg.br
+      - API_ACCESS_MODE=open
+      - STORAGE_DRIVER=sqlite
+      - STORAGE_PATH=.data
+      - TRUST_PROXY=true
+      - CRON_SECRET=seu_segredo_cron_aqui_123
+    volumes:
+      - paflegis_data:/app/.data
+
+volumes:
+  paflegis_data:
+    driver: local

@@ -67,7 +67,7 @@ export default function CookieConsent() {
   if (!showBanner && !showModal) return null;
 
   return (
-    <>
+    <div>
       {showBanner && (
         <div
           className="fixed-bottom bg-white border-top shadow-lg p-3 p-md-4"
@@ -221,6 +221,6 @@ export default function CookieConsent() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

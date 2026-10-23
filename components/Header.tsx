@@ -19,6 +19,7 @@ import {
   Scale,
   FileSpreadsheet,
   FolderKanban,
+  Users,
 } from 'lucide-react';
 import { ALL_38_DOCUMENT_TYPES, getDocumentTypesByCategory } from '@/lib/sapl/documentTypes';
 
@@ -100,17 +101,17 @@ export default function Header() {
           </button>
 
           <div className="collapse navbar-collapse" id="navbarMain">
-            {/* Ordem Solicitada: Início, Matérias, Normas, Sessões, Todos (38), Contato, Sobre */}
+            {/* Ordem: Início, Matérias, Normas, Sessões, Parlamentares, Comissões, Todos (38), Busca, Contato */}
             <ul className="navbar-nav ms-auto mb-2 mb-lg-0 gap-1 align-items-lg-center">
               {/* 1. Início */}
               <li className="nav-item">
                 <Link
                   href="/"
-                  className={`nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
                     pathname === '/' ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
-                  <Landmark size={16} />
+                  <Landmark size={15} />
                   <span>Início</span>
                 </Link>
               </li>
@@ -119,11 +120,11 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/materias"
-                  className={`nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
                     pathname.startsWith('/materias') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
-                  <FileText size={16} />
+                  <FileText size={15} />
                   <span>Matérias</span>
                 </Link>
               </li>
@@ -132,11 +133,11 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/normas"
-                  className={`nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
                     pathname.startsWith('/normas') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
-                  <BookOpen size={16} />
+                  <BookOpen size={15} />
                   <span>Normas</span>
                 </Link>
               </li>
@@ -145,21 +146,47 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/sessoes"
-                  className={`nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
                     pathname.startsWith('/sessoes') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
-                  <Video size={16} />
+                  <Video size={15} />
                   <span>Sessões</span>
                 </Link>
               </li>
 
-              {/* 5. Todos (38) - Menu Suspenso */}
+              {/* 5. Parlamentares */}
+              <li className="nav-item">
+                <Link
+                  href="/parlamentares"
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                    pathname.startsWith('/parlamentares') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
+                  }`}
+                >
+                  <Users size={15} />
+                  <span>Vereadores</span>
+                </Link>
+              </li>
+
+              {/* 6. Comissões */}
+              <li className="nav-item">
+                <Link
+                  href="/comissoes"
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                    pathname.startsWith('/comissoes') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
+                  }`}
+                >
+                  <FolderKanban size={15} />
+                  <span>Comissões</span>
+                </Link>
+              </li>
+
+              {/* 7. Todos (38) - Menu Suspenso */}
               <li className="nav-item">
                 <button
                   type="button"
                   onClick={toggleMenu}
-                  className={`nav-link btn btn-link px-3 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-semibold text-decoration-none border-0 ${
+                  className={`nav-link btn btn-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1 fw-semibold text-decoration-none border-0 ${
                     showMegaMenu || isDocActive
                       ? 'bg-primary bg-opacity-10 text-primary'
                       : 'text-dark'
@@ -169,10 +196,10 @@ export default function Header() {
                   title="Consultar os 38 tipos de documentos da Câmara Municipal"
                   style={{ cursor: 'pointer' }}
                 >
-                  <Layers size={16} className="text-primary" />
-                  <span>Todos (38)</span>
+                  <Layers size={15} className="text-primary" />
+                  <span>38 Tipos</span>
                   <ChevronDown
-                    size={14}
+                    size={13}
                     style={{
                       transform: showMegaMenu ? 'rotate(180deg)' : 'rotate(0deg)',
                       transition: 'transform 0.2s ease',
@@ -180,6 +207,20 @@ export default function Header() {
                     className={showMegaMenu ? 'text-primary' : 'text-muted'}
                   />
                 </button>
+              </li>
+
+              {/* 8. Busca Global */}
+              <li className="nav-item">
+                <Link
+                  href="/busca"
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1 fw-medium ${
+                    pathname.startsWith('/busca') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
+                  }`}
+                  title="Busca global em matérias, leis e sessões"
+                >
+                  <Search size={15} />
+                  <span>Busca</span>
+                </Link>
               </li>
 
               {/* 6. Contato */}
@@ -232,6 +273,8 @@ export default function Header() {
             zIndex: 1050,
             maxHeight: 'calc(100vh - 80px)',
             overflowY: 'auto',
+            overflowX: 'hidden',
+            maxWidth: '100vw',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -247,7 +290,7 @@ export default function Header() {
                 </small>
               </div>
 
-              <div className="d-flex align-items-center gap-2" style={{ minWidth: 260 }}>
+              <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: 320 }}>
                 <div className="input-group input-group-sm">
                   <span className="input-group-text bg-white text-muted">
                     <Search size={14} />

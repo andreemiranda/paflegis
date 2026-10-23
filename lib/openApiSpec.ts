@@ -1,214 +1,156 @@
 /**
- * lib/openApiSpec.ts — Especificação OpenAPI 3.0 para documentação e endpoint /openapi.json.
+ * lib/openApiSpec.ts — Especificação OpenAPI 3.0 dinâmica para documentação e endpoints /api/openapi.json e /api-docs.
  */
 
-export const openApiSpec = {
-  openapi: '3.0.0',
-  info: {
-    title: 'Paflegis Public API - Pedro Afonso - TO',
-    version: '1.0.0',
-    description:
-      'API pública otimizada e normalizada do Paflegis para a Câmara Municipal de Pedro Afonso - TO. Todas as URLs de documentos, anexos e rotas retornadas pelo SAPL legado têm seus IPs brutos (64.23.167.191) automaticamente normalizados para o domínio público oficial seguro HTTPS.',
-    contact: {
-      name: 'Paflegis - Consulta Pública Legislativa',
-      url: 'https://sapl.pedroafonso.to.leg.br',
-    },
-  },
-  servers: [
-    {
-      url: '/api/v1',
-      description: 'Servidor Proxy e Agregador Paflegis',
-    },
-  ],
-  components: {
-    securitySchemes: {
-      ApiKeyAuth: {
-        type: 'apiKey',
-        in: 'header',
-        name: 'x-api-key',
-        description:
-          'Chave de API para controle de tráfego de integradores parceiros em /api/v1/*. Envie o cabeçalho x-api-key quando solicitado.',
+import { getConfig } from '@/lib/config';
+
+export function getDynamicOpenApiSpec(appOrigin = '') {
+  const config = getConfig();
+
+  return {
+    openapi: '3.0.0',
+    info: {
+      title: `${config.siteName} — API Pública & Espelho Nativo`,
+      version: '2.0.0',
+      description: `API pública e espelho nativo da ${config.orgName} (${config.orgCity} - ${config.orgUf}). Fornece acesso estruturado, normalizado e resiliente a matérias legislativas, normas jurídicas, sessões plenárias, parlamentares e documentos oficiais.`,
+      contact: {
+        name: config.siteName,
+        url: config.saplPublicDomain,
       },
     },
-  },
-  security: [{ ApiKeyAuth: [] }],
-  paths: {
-    '/endpoints': {
-      get: {
-        summary: 'Catálogo dos 129 Endpoints Públicos do SAPL',
-        description:
-          'Retorna o mapeamento completo dos 129 endpoints da API pública do SAPL, com substituição automática do IP 64.23.167.191 pelas variáveis de domínio e URL base configuradas.',
-        parameters: [
-          {
-            name: 'format',
-            in: 'query',
-            schema: { type: 'string', enum: ['raw', 'template', 'snippet'] },
-            description:
-              'Formato do retorno: template (retorna o mapa com [NEXT_PUBLIC_SAPL_PUBLIC_DOMAIN]), raw (apenas chaves e URLs), ou padrão (catálogo estruturado enriquecido).',
-          },
-          {
-            name: 'modulo',
-            in: 'query',
-            schema: { type: 'string' },
-            description:
-              'Filtra por módulo específico (materia, norma, sessao, parlamentares, comissoes, audiencia, protocoloadm, etc.)',
-          },
-        ],
-        responses: {
-          '200': { description: 'Catálogo de endpoints mapeados e sanitizados' },
+    servers: [
+      {
+        url: appOrigin ? `${appOrigin}/api` : '/api',
+        description: 'API Nativa Espelhada do SAPL (somente leitura)',
+      },
+      {
+        url: appOrigin ? `${appOrigin}/api/v1` : '/api/v1',
+        description: 'Rotas Agregadas e Otimizadas Paflegis v1',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        ApiKeyHeader: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-api-key',
+          description: 'Chave de API enviada pelo cabeçalho x-api-key para clientes e integradores externos.',
+        },
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          description: 'Token de autenticação enviado pelo cabeçalho Authorization: Bearer <chave>.',
         },
       },
     },
-    '/materias': {
-      get: {
-        summary: 'Listar Matérias Legislativas',
-        description:
-          'Retorna matérias legislativas com filtros opcionais de busca, tipo, ano e situação, com URLs de textos originais e anexos normalizadas.',
-        parameters: [
-          {
-            name: 'busca',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'Termo de busca na ementa ou autor',
-          },
-          {
-            name: 'tipo',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'Sigla ou ID do tipo de matéria',
-          },
-          {
-            name: 'ano',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'Ano de apresentação',
-          },
-          {
-            name: 'pagina',
-            in: 'query',
-            schema: { type: 'integer' },
-            description: 'Número da página',
-          },
-          {
-            name: 'limite',
-            in: 'query',
-            schema: { type: 'integer' },
-            description: 'Quantidade por página (padrão: 10)',
-          },
-        ],
-        responses: {
-          '200': { description: 'Lista de matérias legislativas' },
-        },
-      },
-    },
-    '/materias/{id}': {
-      get: {
-        summary: 'Obter Detalhe de Matéria Legislativa',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-        ],
-        responses: {
-          '200': { description: 'Detalhes da matéria legislativa' },
-          '404': { description: 'Matéria não encontrada' },
-        },
-      },
-    },
-    '/normas': {
-      get: {
-        summary: 'Listar Normas Jurídicas',
-        description:
-          'Retorna leis, decretos, resoluções e normas municipais de Pedro Afonso com URLs integrais normalizadas.',
-        parameters: [
-          {
-            name: 'busca',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'Termo de busca na ementa',
-          },
-          {
-            name: 'tipo',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'ID ou descrição do tipo de norma',
-          },
-          {
-            name: 'ano',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'Ano da norma',
-          },
-        ],
-        responses: {
-          '200': { description: 'Lista de normas jurídicas' },
-        },
-      },
-    },
-    '/normas/{id}': {
-      get: {
-        summary: 'Obter Detalhe de Norma Jurídica',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-        ],
-        responses: {
-          '200': { description: 'Detalhes da norma jurídica' },
-          '404': { description: 'Norma não encontrada' },
-        },
-      },
-    },
-    '/sessoes': {
-      get: {
-        summary: 'Listar Sessões Plenárias',
-        parameters: [
-          {
-            name: 'ano',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'Ano das sessões',
-          },
-          {
-            name: 'busca',
-            in: 'query',
-            schema: { type: 'string' },
-            description: 'Termo de busca',
-          },
-        ],
-        responses: {
-          '200': { description: 'Lista de sessões plenárias' },
-        },
-      },
-    },
-    '/sessoes/{id}': {
-      get: {
-        summary: 'Obter Detalhe de Sessão Plenária',
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-        ],
-        responses: {
-          '200': { description: 'Detalhes da sessão' },
-          '404': { description: 'Sessão não encontrada' },
-        },
-      },
-    },
-    '/estatisticas': {
-      get: {
-        summary: 'Obter Estatísticas Legislativas',
-        responses: {
-          '200': {
-            description: 'Totais e consolidados por tipo de matéria, norma e sessões',
+    security: [{ ApiKeyHeader: [] }, { BearerAuth: [] }],
+    paths: {
+      '/materia/materialegislativa/': {
+        get: {
+          tags: ['Espelho Nativo SAPL'],
+          summary: 'Listagem de Matérias Legislativas',
+          description: 'Espelha a API nativa do SAPL com paginação, busca e filtros.',
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1 }, description: 'Número da página' },
+            { name: 'page_size', in: 'query', schema: { type: 'integer', default: 20 }, description: 'Itens por página' },
+            { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Busca textual na ementa' },
+            { name: 'ano', in: 'query', schema: { type: 'integer' }, description: 'Ano de apresentação' },
+            { name: 'tipo', in: 'query', schema: { type: 'integer' }, description: 'ID do tipo de matéria' },
+          ],
+          responses: {
+            '200': { description: 'Lista paginada de matérias com links reescritos' },
+            '401': { description: 'Chave de API não fornecida ou inválida (no modo keyed)' },
           },
         },
       },
-    },
-    '/health': {
-      get: {
-        summary: 'Verificação de Saúde e Diagnóstico de Conexão',
-        responses: {
-          '200': {
-            description:
-              'Status da conectividade com o SAPL, latência e diagnóstico da substituição de IP.',
+      '/materia/materialegislativa/{id}/': {
+        get: {
+          tags: ['Espelho Nativo SAPL'],
+          summary: 'Detalhe de Matéria Legislativa por ID',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'integer' }, description: 'ID da matéria' },
+          ],
+          responses: {
+            '200': { description: 'Detalhes da matéria' },
+            '404': { description: 'Matéria não encontrada' },
           },
         },
       },
+      '/norma/normajuridica/': {
+        get: {
+          tags: ['Espelho Nativo SAPL'],
+          summary: 'Legislação e Normas Jurídicas',
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer' } },
+            { name: 'search', in: 'query', schema: { type: 'string' } },
+            { name: 'ano', in: 'query', schema: { type: 'integer' } },
+          ],
+          responses: { '200': { description: 'Lista de normas jurídicas' } },
+        },
+      },
+      '/sessao/sessaoplenaria/': {
+        get: {
+          tags: ['Espelho Nativo SAPL'],
+          summary: 'Sessões Plenárias',
+          parameters: [
+            { name: 'page', in: 'query', schema: { type: 'integer' } },
+            { name: 'data_inicio__year', in: 'query', schema: { type: 'integer' } },
+          ],
+          responses: { '200': { description: 'Lista de sessões plenárias' } },
+        },
+      },
+      '/parlamentares/parlamentar/': {
+        get: {
+          tags: ['Espelho Nativo SAPL'],
+          summary: 'Parlamentares e Vereadores',
+          responses: { '200': { description: 'Lista de parlamentares' } },
+        },
+      },
+      '/comissoes/comissao/': {
+        get: {
+          tags: ['Espelho Nativo SAPL'],
+          summary: 'Comissões Parlamentares',
+          responses: { '200': { description: 'Lista de comissões' } },
+        },
+      },
+      '/media/{path}': {
+        get: {
+          tags: ['Mídia e Documentos'],
+          summary: 'Streaming de Documentos e PDFs',
+          description: 'Entrega anexos, atas e redações em PDF com cache e suporte a streaming parcial (Range).',
+          parameters: [
+            { name: 'path', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': { description: 'Documento binário' },
+            '206': { description: 'Conteúdo parcial (Range streaming)' },
+          },
+        },
+      },
+      '/v1/endpoints': {
+        get: {
+          tags: ['Catálogo'],
+          summary: 'Catálogo Dinâmico de Endpoints do SAPL',
+          description: 'Lista todos os endpoints descobertos na instância conectada do SAPL.',
+          responses: { '200': { description: 'Catálogo estruturado' } },
+        },
+      },
+      '/v1/sync/status': {
+        get: {
+          tags: ['Sincronização & Saúde'],
+          summary: 'Status de Sincronização do Espelho Local',
+          responses: { '200': { description: 'Contagens e integridade do espelho' } },
+        },
+      },
+      '/v1/health': {
+        get: {
+          tags: ['Sincronização & Saúde'],
+          summary: 'Verificação de Integridade do Sistema',
+          responses: { '200': { description: 'Status de conectividade' } },
+        },
+      },
     },
-  },
-};
+  };
+}
+
+export const openApiSpec = getDynamicOpenApiSpec();

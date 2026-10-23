@@ -47,8 +47,8 @@ export default function AccessibilityBar() {
   };
 
   return (
-    <>
-      <div className="bg-dark text-white py-1 px-3 border-bottom border-secondary small" aria-label="Barra de Acessibilidade">
+    <div>
+      <div className="bg-dark text-white py-1 px-3 border-bottom border-secondary small w-100 overflow-hidden" aria-label="Barra de Acessibilidade">
         <div className="container d-flex flex-wrap justify-content-between align-items-center gap-2">
           <div className="d-flex align-items-center gap-3">
             <span className="text-secondary fw-semibold">Acessibilidade:</span>
@@ -98,6 +98,6 @@ export default function AccessibilityBar() {
       </div>
 
       {showModal && <AccessibilityModal onClose={() => setShowModal(false)} />}
-    </>
+    </div>
   );
 }

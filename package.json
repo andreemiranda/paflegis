@@ -6,7 +6,15 @@
     "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "verify:parity": "tsx scripts/verifyParity.ts",
+    "vite": "node scripts/vite-shim.js"
+  },
+  "bin": {
+    "vite": "./scripts/vite-shim.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@google/genai": "~2.4.0",
@@ -22,6 +30,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
+    "tsx": "^4.23.15",
     "typescript": "~5.8.2"
   }
 }

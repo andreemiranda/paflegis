@@ -1,27 +1,66 @@
 /**
- * lib/auth/apiKeyAuth.ts — Autenticação de API Key para Next.js Route Handlers.
+ * lib/auth/apiKeyAuth.ts — Autenticação de API Key segura para Next.js Route Handlers.
  *
- * Arquitetura (Abordagem A - Same-Origin Bypass + Gate Externo):
- * 1. O frontend do próprio Paflegis consome as rotas por caminhos relativos (/api/v1/...)
- *    sem necessidade de embutir chaves de build-time (NEXT_PUBLIC_* ou VITE_*).
- * 2. Requisições externas / de terceiros passam pelo gate caso API_KEYS_PERMITIDAS esteja configurada.
- * 3. Se nenhuma chave estiver configurada no servidor, o acesso público de consulta é mantido.
+ * Regras implementadas:
+ * 1. Nome oficial: API_KEYS_PERMITIDAS. (API_KEYS aceito como alias legado com aviso).
+ * 2. Sem brechas: não confia em x-internal-request, Origin, Referer nem Sec-Fetch-Site.
+ * 3. Frontend do app autentica via cookie de sessão curto assinado com HMAC (paflegis_session).
+ * 4. Chave aceita estritamente por cabeçalho (x-api-key ou Authorization: Bearer <key>).
+ *    Chaves em query string (?x-api-key, ?api_key) são expressamente recusadas.
+ * 5. Comparação em tempo constante (crypto.timingSafeEqual) e suporte a hashes SHA-256 no .env.
+ * 6. Modos configuráveis: 'open' (leitura pública com rate limit) ou 'keyed' (chave obrigatória).
  */
 
+import crypto from 'crypto';
 import { NextRequest } from 'next/server';
+import { getConfig } from '@/lib/config';
+import { hasValidSession } from '@/lib/auth/session';
 
-export function getValidApiKeys(): Set<string> {
-  const keys = new Set<string>();
-  const envKeys = process.env.API_KEYS_PERMITIDAS;
-  if (envKeys) {
-    envKeys.split(',').forEach(k => {
-      const trimmed = k.trim();
-      if (trimmed) keys.add(trimmed);
-    });
+interface ParsedKey {
+  rawOrHash: string;
+  isHash: boolean;
+  name?: string;
+  scope?: string;
+}
+
+/**
+ * Normaliza e analisa as chaves de API configuradas.
+ * Suporta chaves simples ou hashes SHA-256 (com ou sem prefixo sha256:).
+ */
+export function getValidConfiguredKeys(): ParsedKey[] {
+  const config = getConfig();
+  const keys: ParsedKey[] = [];
+
+  for (const item of config.apiKeysPermitidas) {
+    const trimmed = item.trim();
+    if (!trimmed) continue;
+
+    // Se possui metadados no formato nome:chave:escopo
+    const parts = trimmed.split(':');
+    if (parts.length >= 3 && (parts[0] !== 'sha256')) {
+      const name = parts[0];
+      const keyOrHash = parts[1];
+      const scope = parts[2];
+      const isHash = /^[a-f0-9]{64}$/i.test(keyOrHash);
+      keys.push({ rawOrHash: keyOrHash, isHash, name, scope });
+      continue;
+    }
+
+    if (trimmed.startsWith('sha256:')) {
+      keys.push({ rawOrHash: trimmed.slice(7).toLowerCase(), isHash: true });
+    } else if (/^[a-f0-9]{64}$/i.test(trimmed)) {
+      keys.push({ rawOrHash: trimmed.toLowerCase(), isHash: true });
+    } else {
+      keys.push({ rawOrHash: trimmed, isHash: false });
+    }
   }
+
   return keys;
 }
 
+/**
+ * Mascara a chave de API para exibição segura em logs estruturados.
+ */
 export function maskApiKey(key?: string): string {
   if (!key) return '(ausente)';
   const s = key.trim();
@@ -30,90 +69,139 @@ export function maskApiKey(key?: string): string {
 }
 
 /**
- * Verifica se a requisição tem origem no próprio site Paflegis (Same-Origin).
+ * Compara duas strings em tempo constante para mitigar ataques de temporização.
  */
-export function isSameOriginRequest(req: NextRequest): boolean {
-  const host = req.headers.get('host');
-  const origin = req.headers.get('origin');
-  const referer = req.headers.get('referer');
-  const secFetchSite = req.headers.get('sec-fetch-site');
-
-  // Navegador moderno explicitando same-origin
-  if (secFetchSite === 'same-origin' || secFetchSite === 'same-site') {
-    return true;
-  }
-
-  // Origem ou referer batendo com o host atual
-  if (origin && host) {
-    try {
-      const originUrl = new URL(origin);
-      if (originUrl.host === host) return true;
-    } catch {
-      // ignore
+function constantTimeCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a, 'utf8');
+    const bufB = Buffer.from(b, 'utf8');
+    if (bufA.length !== bufB.length) {
+      // Cria buffer de tamanho igual para garantir execução constante
+      crypto.timingSafeEqual(bufA, bufA);
+      return false;
     }
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
   }
-
-  if (referer && host) {
-    try {
-      const refUrl = new URL(referer);
-      if (refUrl.host === host) return true;
-    } catch {
-      // ignore
-    }
-  }
-
-  // Se não tem origin/referer (chamada interna server-side ou same-origin default)
-  const isInternal = req.headers.get('x-internal-request') === '1';
-  if (isInternal) return true;
-
-  return false;
 }
 
 /**
- * Valida a autorização de uma requisição para a API.
+ * Extrai a chave de API exclusivamente através de cabeçalhos HTTP.
+ * Qualquer tentativa de envio por query param é ignorada intencionalmente para segurança.
  */
-export function validateApiRequest(req: NextRequest): { authorized: boolean; reason?: string } {
-  const validKeys = getValidApiKeys();
-
-  // 1. Se nenhuma chave foi configurada no servidor, o portal é aberto e público
-  if (validKeys.size === 0) {
-    return { authorized: true };
-  }
-
-  // 2. Requisições do próprio frontend (same-origin) nunca são barradas por descompasso de chave
-  if (isSameOriginRequest(req)) {
-    return { authorized: true };
-  }
-
-  // 3. Extrai x-api-key do cabeçalho ou query param
+export function extractApiKeyFromHeaders(req: NextRequest): string | null {
+  // 1. Cabeçalho x-api-key ou X-API-KEY
   const headerKey = req.headers.get('x-api-key') || req.headers.get('X-API-KEY');
-  const queryKey = req.nextUrl.searchParams.get('x-api-key') || req.nextUrl.searchParams.get('api_key');
-  const keyReceived = headerKey || queryKey;
+  if (headerKey && headerKey.trim()) {
+    return headerKey.trim();
+  }
 
-  if (keyReceived && validKeys.has(keyReceived.trim())) {
+  // 2. Cabeçalho Authorization: Bearer <key>
+  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+  if (authHeader && authHeader.trim().toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.trim().slice(7).trim();
+    if (token) return token;
+  }
+
+  return null;
+}
+
+export interface AuthValidationResult {
+  authorized: boolean;
+  statusCode?: number;
+  reason?: string;
+  keyName?: string;
+  scope?: string;
+  isSessionUser?: boolean;
+}
+
+/**
+ * Valida o acesso à requisição.
+ */
+export function validateApiRequest(req: NextRequest, requiredScope?: string): AuthValidationResult {
+  const config = getConfig();
+
+  // 1. Se o cliente possui uma sessão segura assinada com HMAC emitida pelo servidor do app
+  if (hasValidSession(req)) {
+    return { authorized: true, isSessionUser: true };
+  }
+
+  // 2. Verifica se o cliente tentou enviar chave pela query string (proibido pela Parte 1 Ponto 3)
+  const queryKey = req.nextUrl.searchParams.get('x-api-key') || req.nextUrl.searchParams.get('api_key');
+  if (queryKey) {
+    return {
+      authorized: false,
+      statusCode: 400,
+      reason: 'Por razões de segurança, chaves de API não são aceitas via URL (query string). Envie pelo cabeçalho x-api-key ou Authorization: Bearer.',
+    };
+  }
+
+  // 3. Extrai chave do cabeçalho
+  const keyReceived = extractApiKeyFromHeaders(req);
+  const configuredKeys = getValidConfiguredKeys();
+
+  // Se uma chave foi enviada, valida contra a lista de chaves permitidas
+  if (keyReceived) {
+    const keyHash = crypto.createHash('sha256').update(keyReceived).digest('hex').toLowerCase();
+
+    for (const conf of configuredKeys) {
+      let matches = false;
+      if (conf.isHash) {
+        matches = constantTimeCompare(keyHash, conf.rawOrHash.toLowerCase());
+      } else {
+        matches = constantTimeCompare(keyReceived, conf.rawOrHash);
+      }
+
+      if (matches) {
+        // Valida escopo caso exigido
+        if (requiredScope && conf.scope && conf.scope !== '*' && conf.scope !== requiredScope) {
+          return {
+            authorized: false,
+            statusCode: 403,
+            reason: `Chave de API não autorizada para o escopo solicitado (${requiredScope}).`,
+          };
+        }
+        return {
+          authorized: true,
+          keyName: conf.name,
+          scope: conf.scope,
+        };
+      }
+    }
+
+    return {
+      authorized: false,
+      statusCode: 401,
+      reason: 'Chave de API inválida ou não autorizada pelo servidor.',
+    };
+  }
+
+  // Se nenhuma chave foi fornecida e o modo é OPEN: acesso público de leitura permitido
+  if (config.apiAccessMode === 'open') {
     return { authorized: true };
   }
 
+  // Se o modo é KEYED: chave é estritamente obrigatória
   return {
     authorized: false,
-    reason: keyReceived
-      ? 'Chave de API inválida ou não autorizada pelo servidor.'
-      : 'Chave de API ausente para requisição externa. Forneça o cabeçalho x-api-key.',
+    statusCode: 401,
+    reason: 'Chave de API ausente para requisição externa. Forneça o cabeçalho x-api-key ou Authorization: Bearer.',
   };
 }
 
 /**
- * Informações seguras de diagnóstico para a rota /api/v1/health.
+ * Diagnóstico seguro para o endpoint /api/v1/health (sem vazar segredos nem contagens sensíveis).
  */
 export function getAuthDiagnostics(): {
-  apiKeysConfigured: boolean;
   strategy: string;
-  keysCount: number;
+  mode: string;
+  authConfigured: boolean;
 } {
-  const validKeys = getValidApiKeys();
+  const config = getConfig();
   return {
-    apiKeysConfigured: validKeys.size > 0,
-    strategy: 'same-origin-bypass + external-api-key-gate',
-    keysCount: validKeys.size,
+    strategy: 'header-key + hmac-session',
+    mode: config.apiAccessMode,
+    authConfigured: config.apiKeysPermitidas.length > 0,
   };
 }
