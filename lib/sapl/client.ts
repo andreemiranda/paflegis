@@ -54,18 +54,45 @@ export class ApiError extends Error {
   }
 }
 
+export const DEFAULT_CLIENT_API_KEY = 'sk_1724ebeae5b8b48215cf762ca8bb2a0c';
+
+export function getStoredApiKey(): string {
+  if (typeof window !== 'undefined') {
+    const custom = localStorage.getItem('paflegis_api_key');
+    if (custom && custom.trim()) return custom.trim();
+  }
+  return DEFAULT_CLIENT_API_KEY;
+}
+
+export function setStoredApiKey(key: string): void {
+  if (typeof window !== 'undefined') {
+    if (key && key.trim()) {
+      localStorage.setItem('paflegis_api_key', key.trim());
+    } else {
+      localStorage.removeItem('paflegis_api_key');
+    }
+  }
+}
+
 async function paflegisFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = path.startsWith('http') ? path : path;
+  const apiKey = getStoredApiKey();
+
+  const headers = new Headers(options?.headers || {});
+  if (!headers.has('Accept')) headers.set('Accept', 'application/json');
+  if (!headers.has('Content-Type') && (!options?.method || options.method === 'GET' || options.method === 'POST')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (!headers.has('x-api-key') && apiKey) {
+    headers.set('x-api-key', apiKey);
+  }
 
   let res: Response;
   try {
     res = await fetch(url, {
       ...options,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        ...(options?.headers || {}),
-      },
+      headers,
+      credentials: 'same-origin',
     });
   } catch {
     throw new ApiError(

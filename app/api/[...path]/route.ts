@@ -43,10 +43,17 @@ export async function GET(
     );
   }
 
-  // 3. Monta o caminho e query string do recurso upstream
+  // 3. Monta o caminho e query string do recurso upstream (removendo chaves de autenticação internas)
   const relativePath = segments.join('/');
   const searchParams = req.nextUrl.searchParams;
-  const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+  const upstreamParams = new URLSearchParams(searchParams);
+  upstreamParams.delete('API_KEYS');
+  upstreamParams.delete('api_keys');
+  upstreamParams.delete('API_KEY');
+  upstreamParams.delete('api_key');
+  upstreamParams.delete('x-api-key');
+  upstreamParams.delete('key');
+  const queryString = upstreamParams.toString() ? `?${upstreamParams.toString()}` : '';
 
   // Determina modulo e recurso (ex: modulo='materia', recurso='materialegislativa', id='123')
   const modulo = segments[0] || '';

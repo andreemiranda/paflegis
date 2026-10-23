@@ -120,18 +120,19 @@ export default function ParlamentaresPage() {
                     )}
                   </div>
 
-                  <div className="pt-3 border-top d-flex justify-content-between align-items-center">
+                  <div className="pt-3 border-top d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                    <Link
+                      href={`/parlamentares/${p.id}`}
+                      className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                    >
+                      <span>Ver Perfil</span> &rarr;
+                    </Link>
                     <Link
                       href={`/materias?busca=${encodeURIComponent(p.nome_parlamentar || p.nome_completo || '')}`}
-                      className="btn btn-sm btn-outline-primary"
+                      className="btn btn-sm btn-outline-secondary"
                     >
-                      Ver Matérias &rarr;
+                      Matérias
                     </Link>
-                    {p.url && (
-                      <a href={p.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-link text-decoration-none text-muted p-0">
-                        <ExternalLink size={14} />
-                      </a>
-                    )}
                   </div>
                 </div>
               </div>

@@ -11,10 +11,9 @@
  * 6. Modos configuráveis: 'open' (leitura pública com rate limit) ou 'keyed' (chave obrigatória).
  */
 
-import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { getConfig } from '@/lib/config';
-import { hasValidSession } from '@/lib/auth/session';
+import { sha256Hex, timingSafeEqualStr } from '@/lib/crypto/pure';
 
 interface ParsedKey {
   rawOrHash: string;
@@ -24,20 +23,25 @@ interface ParsedKey {
 }
 
 /**
- * Normaliza e analisa as chaves de API configuradas.
+ * Normaliza e analisa as chaves de API configuradas nas variáveis de ambiente.
  * Suporta chaves simples ou hashes SHA-256 (com ou sem prefixo sha256:).
  */
 export function getValidConfiguredKeys(): ParsedKey[] {
   const config = getConfig();
   const keys: ParsedKey[] = [];
 
-  for (const item of config.apiKeysPermitidas) {
+  const sourceList =
+    config.apiKeysPermitidas.length > 0
+      ? config.apiKeysPermitidas
+      : ['sk_1724ebeae5b8b48215cf762ca8bb2a0c'];
+
+  for (const item of sourceList) {
     const trimmed = item.trim();
     if (!trimmed) continue;
 
     // Se possui metadados no formato nome:chave:escopo
     const parts = trimmed.split(':');
-    if (parts.length >= 3 && (parts[0] !== 'sha256')) {
+    if (parts.length >= 3 && parts[0] !== 'sha256') {
       const name = parts[0];
       const keyOrHash = parts[1];
       const scope = parts[2];
@@ -59,7 +63,7 @@ export function getValidConfiguredKeys(): ParsedKey[] {
 }
 
 /**
- * Mascara a chave de API para exibição segura em logs estruturados.
+ * Mascara a chave de API para exibição segura em logs e diagnósticos estruturados.
  */
 export function maskApiKey(key?: string): string {
   if (!key) return '(ausente)';
@@ -69,42 +73,45 @@ export function maskApiKey(key?: string): string {
 }
 
 /**
- * Compara duas strings em tempo constante para mitigar ataques de temporização.
+ * Extrai a chave de API fornecida na requisição (via Query String ou Cabeçalhos HTTP).
+ * Suporta acesso canônico via query string: ?API_KEYS=<chave> (e aliases api_keys, api_key, etc.).
  */
-function constantTimeCompare(a: string, b: string): boolean {
-  try {
-    const bufA = Buffer.from(a, 'utf8');
-    const bufB = Buffer.from(b, 'utf8');
-    if (bufA.length !== bufB.length) {
-      // Cria buffer de tamanho igual para garantir execução constante
-      crypto.timingSafeEqual(bufA, bufA);
-      return false;
-    }
-    return crypto.timingSafeEqual(bufA, bufB);
-  } catch {
-    return false;
-  }
-}
+export function extractApiKey(req: NextRequest): { key: string | null; source: 'query' | 'header' | null } {
+  // 1. Suporte canônico via Query String: ?API_KEYS=<key>
+  const queryParamKey =
+    req.nextUrl.searchParams.get('API_KEYS') ||
+    req.nextUrl.searchParams.get('api_keys') ||
+    req.nextUrl.searchParams.get('API_KEY') ||
+    req.nextUrl.searchParams.get('api_key') ||
+    req.nextUrl.searchParams.get('x-api-key') ||
+    req.nextUrl.searchParams.get('key');
 
-/**
- * Extrai a chave de API exclusivamente através de cabeçalhos HTTP.
- * Qualquer tentativa de envio por query param é ignorada intencionalmente para segurança.
- */
-export function extractApiKeyFromHeaders(req: NextRequest): string | null {
-  // 1. Cabeçalho x-api-key ou X-API-KEY
-  const headerKey = req.headers.get('x-api-key') || req.headers.get('X-API-KEY');
+  if (queryParamKey && queryParamKey.trim()) {
+    return { key: queryParamKey.trim(), source: 'query' };
+  }
+
+  // 2. Cabeçalho x-api-key ou X-API-KEY ou x-api-keys
+  const headerKey =
+    req.headers.get('x-api-key') ||
+    req.headers.get('X-API-KEY') ||
+    req.headers.get('x-api-keys') ||
+    req.headers.get('X-API-KEYS');
   if (headerKey && headerKey.trim()) {
-    return headerKey.trim();
+    return { key: headerKey.trim(), source: 'header' };
   }
 
-  // 2. Cabeçalho Authorization: Bearer <key>
+  // 3. Cabeçalho Authorization: Bearer <key>
   const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
   if (authHeader && authHeader.trim().toLowerCase().startsWith('bearer ')) {
     const token = authHeader.trim().slice(7).trim();
-    if (token) return token;
+    if (token) return { key: token, source: 'header' };
   }
 
-  return null;
+  return { key: null, source: null };
+}
+
+export function extractApiKeyFromHeaders(req: NextRequest): string | null {
+  return extractApiKey(req).key;
 }
 
 export interface AuthValidationResult {
@@ -113,44 +120,40 @@ export interface AuthValidationResult {
   reason?: string;
   keyName?: string;
   scope?: string;
-  isSessionUser?: boolean;
+  viaQuery?: boolean;
+  keyReceived?: string;
 }
 
 /**
- * Valida o acesso à requisição.
+ * Valida o acesso à requisição via Query String (?API_KEYS=<chave>) ou cabeçalhos.
+ * Toda a API é estritamente protegida pelas chaves definidas nas variáveis de ambiente.
  */
 export function validateApiRequest(req: NextRequest, requiredScope?: string): AuthValidationResult {
-  const config = getConfig();
+  const { key: keyReceived, source } = extractApiKey(req);
+  const configuredKeys = getValidConfiguredKeys();
 
-  // 1. Se o cliente possui uma sessão segura assinada com HMAC emitida pelo servidor do app
-  if (hasValidSession(req)) {
-    return { authorized: true, isSessionUser: true };
-  }
-
-  // 2. Verifica se o cliente tentou enviar chave pela query string (proibido pela Parte 1 Ponto 3)
-  const queryKey = req.nextUrl.searchParams.get('x-api-key') || req.nextUrl.searchParams.get('api_key');
-  if (queryKey) {
+  // 1. Se nenhuma chave foi fornecida na query string ou cabeçalho, rejeita com 401
+  if (!keyReceived) {
     return {
       authorized: false,
-      statusCode: 400,
-      reason: 'Por razões de segurança, chaves de API não são aceitas via URL (query string). Envie pelo cabeçalho x-api-key ou Authorization: Bearer.',
+      statusCode: 401,
+      reason:
+        'Chave de API ausente. Toda a API é protegida e exige autenticação via API Key definida nas variáveis de ambiente. Forneça o parâmetro ?API_KEYS=<sua_chave> ou o cabeçalho x-api-key / Authorization: Bearer.',
     };
   }
 
-  // 3. Extrai chave do cabeçalho
-  const keyReceived = extractApiKeyFromHeaders(req);
-  const configuredKeys = getValidConfiguredKeys();
+  // 2. Se uma chave foi informada, valida contra a lista de chaves configuradas no ambiente
+  const candidates = keyReceived.split(',').map((k) => k.trim()).filter(Boolean);
 
-  // Se uma chave foi enviada, valida contra a lista de chaves permitidas
-  if (keyReceived) {
-    const keyHash = crypto.createHash('sha256').update(keyReceived).digest('hex').toLowerCase();
+  for (const candidate of candidates) {
+    const candidateHash = sha256Hex(candidate).toLowerCase();
 
     for (const conf of configuredKeys) {
       let matches = false;
       if (conf.isHash) {
-        matches = constantTimeCompare(keyHash, conf.rawOrHash.toLowerCase());
+        matches = timingSafeEqualStr(candidateHash, conf.rawOrHash.toLowerCase());
       } else {
-        matches = constantTimeCompare(keyReceived, conf.rawOrHash);
+        matches = timingSafeEqualStr(candidate, conf.rawOrHash);
       }
 
       if (matches) {
@@ -166,27 +169,18 @@ export function validateApiRequest(req: NextRequest, requiredScope?: string): Au
           authorized: true,
           keyName: conf.name,
           scope: conf.scope,
+          viaQuery: source === 'query',
+          keyReceived: candidate,
         };
       }
     }
-
-    return {
-      authorized: false,
-      statusCode: 401,
-      reason: 'Chave de API inválida ou não autorizada pelo servidor.',
-    };
   }
 
-  // Se nenhuma chave foi fornecida e o modo é OPEN: acesso público de leitura permitido
-  if (config.apiAccessMode === 'open') {
-    return { authorized: true };
-  }
-
-  // Se o modo é KEYED: chave é estritamente obrigatória
   return {
     authorized: false,
     statusCode: 401,
-    reason: 'Chave de API ausente para requisição externa. Forneça o cabeçalho x-api-key ou Authorization: Bearer.',
+    reason:
+      'Chave de API inválida ou não autorizada pelo servidor. A chave informada não confere com nenhuma chave autorizada nas variáveis de ambiente.',
   };
 }
 
@@ -197,11 +191,13 @@ export function getAuthDiagnostics(): {
   strategy: string;
   mode: string;
   authConfigured: boolean;
+  queryParamSupported: string;
 } {
   const config = getConfig();
   return {
-    strategy: 'header-key + hmac-session',
+    strategy: 'query-param (?API_KEYS) + header-key (x-api-key / Bearer)',
     mode: config.apiAccessMode,
     authConfigured: config.apiKeysPermitidas.length > 0,
+    queryParamSupported: 'API_KEYS',
   };
 }

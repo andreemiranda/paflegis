@@ -114,16 +114,16 @@ export default function ComissoesPage() {
                     )}
                   </div>
 
-                  <div className="pt-3 border-top d-flex justify-content-between align-items-center">
+                  <div className="pt-3 border-top d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                    <Link
+                      href={`/comissoes/${c.id}`}
+                      className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                    >
+                      <span>Ver Comissão</span> &rarr;
+                    </Link>
                     <span className="badge bg-light text-muted border">
                       {c.tipo || 'Permanente'}
                     </span>
-                    <Link
-                      href={`/dados-publicos/comissoes/comissao`}
-                      className="btn btn-sm btn-outline-primary"
-                    >
-                      Ver no Catálogo &rarr;
-                    </Link>
                   </div>
                 </div>
               </div>

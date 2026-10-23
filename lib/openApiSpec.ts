@@ -30,6 +30,12 @@ export function getDynamicOpenApiSpec(appOrigin = '') {
     ],
     components: {
       securitySchemes: {
+        ApiKeyQuery: {
+          type: 'apiKey',
+          in: 'query',
+          name: 'API_KEYS',
+          description: 'Chave de API enviada via query string (?API_KEYS=<chave>) para consulta direta.',
+        },
         ApiKeyHeader: {
           type: 'apiKey',
           in: 'header',
@@ -43,8 +49,27 @@ export function getDynamicOpenApiSpec(appOrigin = '') {
         },
       },
     },
-    security: [{ ApiKeyHeader: [] }, { BearerAuth: [] }],
+    security: [{ ApiKeyQuery: [] }, { ApiKeyHeader: [] }, { BearerAuth: [] }],
     paths: {
+      '/v1/': {
+        get: {
+          tags: ['Raiz & Descoberta'],
+          summary: 'Ponto de Entrada da API v1',
+          description: 'Retorna metadados da API v1, estado de autenticação e índice de rotas disponíveis.',
+          parameters: [
+            {
+              name: 'API_KEYS',
+              in: 'query',
+              schema: { type: 'string' },
+              description: 'Chave de API fornecida via query string.',
+            },
+          ],
+          responses: {
+            '200': { description: 'Informações e rotas da API v1' },
+            '401': { description: 'Chave de API ausente ou inválida' },
+          },
+        },
+      },
       '/materia/materialegislativa/': {
         get: {
           tags: ['Espelho Nativo SAPL'],

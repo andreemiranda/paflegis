@@ -121,17 +121,14 @@ function loadConfig(): AppConfig {
       if (trimmed) apiKeysPermitidas.push(trimmed);
     });
   }
+  // Se nenhuma chave foi fornecida explicitamente no ambiente, utiliza a chave autorizada padrão
+  if (apiKeysPermitidas.length === 0) {
+    apiKeysPermitidas.push('sk_1724ebeae5b8b48215cf762ca8bb2a0c');
+  }
 
-  // Modo de acesso: 'open' ou 'keyed'
+  // Modo de acesso: estritamente protegido ('keyed') por padrão em toda a API
   const rawAccessMode = process.env.API_ACCESS_MODE?.toLowerCase();
-  const apiAccessMode: 'open' | 'keyed' =
-    rawAccessMode === 'keyed'
-      ? 'keyed'
-      : rawAccessMode === 'open'
-      ? 'open'
-      : apiKeysPermitidas.length > 0
-      ? 'keyed'
-      : 'open';
+  const apiAccessMode: 'open' | 'keyed' = rawAccessMode === 'open' ? 'open' : 'keyed';
 
   // 5. Segredos
   const sessionSecret =

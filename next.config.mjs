@@ -16,6 +16,7 @@ const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
+  skipTrailingSlashRedirect: true,
   images: {
     remotePatterns: uniqueHostnames.map((host) => ({
       protocol: 'https',
@@ -39,7 +40,7 @@ const nextConfig = {
         source: '/api/:path*',
         headers: [
           { key: 'Access-Control-Allow-Methods', value: 'GET, POST, OPTIONS, HEAD' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, x-api-key, X-API-KEY, x-cron-secret' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type, Authorization, x-api-key, X-API-KEY, x-api-keys, X-API-KEYS, x-cron-secret' },
         ],
       },
       {

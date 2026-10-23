@@ -10,8 +10,17 @@ import {
   dateBR,
   sanitizeSaplData,
 } from '@/lib/sapl/backend';
+import { validateApiRequest } from '@/lib/auth/apiKeyAuth';
 
 export async function GET(req: NextRequest) {
+  const auth = validateApiRequest(req);
+  if (!auth.authorized) {
+    return NextResponse.json(
+      { erro: auth.reason || 'Acesso não autorizado à API de normas.' },
+      { status: auth.statusCode || 401 }
+    );
+  }
+
   const searchParams = req.nextUrl.searchParams;
   const search = searchParams.get('busca') || searchParams.get('pesquisa') || searchParams.get('search') || '';
   const tipo = searchParams.get('tipo') || '';

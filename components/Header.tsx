@@ -253,11 +253,11 @@ export default function Header() {
             <div className="d-flex ms-lg-2 mt-2 mt-lg-0 align-items-center">
               <Link
                 href="/api-docs"
-                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3 py-1.5"
-                title="Documentação da API REST"
+                className="btn btn-sm btn-primary d-flex align-items-center gap-1.5 px-3 py-1.5 shadow-sm fw-medium"
+                title="Console de Integração e Documentação da API REST"
               >
                 <Code size={14} />
-                <span>API REST</span>
+                <span>API & Integração</span>
               </Link>
             </div>
           </div>

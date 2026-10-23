@@ -16,11 +16,13 @@ import {
   RefreshCw,
   AlertCircle,
   FileText,
+  Code,
 } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
 import { NormaJuridica } from '@/types';
 import { copyToClipboard } from '@/lib/urlUtils';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal';
+import ApiIntegrationModal from '@/components/ApiIntegrationModal';
 
 export default function NormaDetailPage() {
   const params = useParams();
@@ -32,6 +34,7 @@ export default function NormaDetailPage() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<{ url: string; title: string } | null>(null);
+  const [showApiModal, setShowApiModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -171,14 +174,13 @@ export default function NormaDetailPage() {
               </a>
             )}
 
-            <a
-              href={`/api/norma/normajuridica/${id}/`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => setShowApiModal(true)}
               className="btn btn-outline-secondary d-flex align-items-center gap-1.5"
             >
-              <BookOpen size={15} /> <span>Endpoint na API Nativa</span>
-            </a>
+              <Code size={15} /> <span>API de Integração</span>
+            </button>
           </div>
 
           <div className="mt-3 pt-3 border-top d-flex justify-content-between align-items-center small text-muted">
@@ -232,6 +234,16 @@ export default function NormaDetailPage() {
           onClose={() => setPreviewDoc(null)}
         />
       )}
+
+      {/* Modal de Integração API */}
+      <ApiIntegrationModal
+        isOpen={showApiModal}
+        onClose={() => setShowApiModal(false)}
+        title={`${norma?.tipo || 'Norma'} ${norma?.numero}/${norma?.ano}`}
+        cleanPath={`/api/v1/normas/${id}`}
+        category="Norma Jurídica"
+        defaultData={norma}
+      />
     </div>
   );
 }
