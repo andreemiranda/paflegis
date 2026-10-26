@@ -85,25 +85,7 @@ export default function Footer() {
                 </li>
               </ul>
 
-              {/* Status de Sincronização do Espelho Local */}
-              {syncStatus && (
-                <div className="p-2.5 rounded bg-black bg-opacity-25 border border-secondary border-opacity-50 small mb-3">
-                  <div className="d-flex align-items-center justify-content-between mb-1">
-                    <span className="text-white fw-semibold d-flex align-items-center gap-1" style={{ fontSize: '0.78rem' }}>
-                      <CheckCircle2 size={13} className="text-success" /> Espelho Local Ativo
-                    </span>
-                    <span className="badge bg-success bg-opacity-25 text-success border border-success border-opacity-50" style={{ fontSize: '0.65rem' }}>
-                      {syncStatus.total_registros_espelho || 0} registros
-                    </span>
-                  </div>
-                  <div className="text-white-50" style={{ fontSize: '0.72rem' }}>
-                    Última sincronização:{' '}
-                    {syncStatus.ultima_sincronizacao
-                      ? new Date(syncStatus.ultima_sincronizacao).toLocaleString('pt-BR')
-                      : 'Pendente / Ao vivo'}
-                  </div>
-                </div>
-              )}
+
 
               <button
                 onClick={() => setShowSitemap(true)}

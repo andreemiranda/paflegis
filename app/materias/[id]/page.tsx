@@ -24,6 +24,7 @@ import { MateriaLegislativa } from '@/types';
 import { copyToClipboard } from '@/lib/urlUtils';
 import DocumentPreviewModal from '@/components/DocumentPreviewModal';
 import ApiIntegrationModal from '@/components/ApiIntegrationModal';
+import AdSenseBanner from '@/components/AdSenseBanner';
 
 export default function MateriaDetailPage() {
   const params = useParams();
@@ -102,6 +103,8 @@ export default function MateriaDetailPage() {
           <ArrowLeft size={14} /> Voltar
         </button>
       </div>
+
+      <AdSenseBanner slotType="article_top" />
 
       {/* Main Detail Card */}
       <div className="card border-0 shadow-sm mb-4">
@@ -255,6 +258,9 @@ export default function MateriaDetailPage() {
           </div>
         </div>
       )}
+
+      {/* AdSense Article Bottom */}
+      <AdSenseBanner slotType="article_bottom" />
 
       {/* Preview Modal */}
       {previewDoc && (

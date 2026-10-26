@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Users,
   Award,
   ArrowLeft,
   Mail,
   Phone,
-  Calendar,
   FileText,
   Code,
   Share2,
@@ -17,39 +17,45 @@ import {
   RefreshCw,
   AlertCircle,
   Building,
-  ExternalLink,
+  Briefcase,
+  Globe,
+  MapPin,
+  User,
+  ShieldCheck,
 } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
-import { copyToClipboard } from '@/lib/urlUtils';
+import { copyToClipboard, normalizePhotoUrl } from '@/lib/urlUtils';
 import ApiIntegrationModal from '@/components/ApiIntegrationModal';
+import { ApiParlamentar } from '@/lib/sapl/parlamentaresData';
 
 export default function ParlamentarDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
-  const [parlamentar, setParlamentar] = useState<any>(null);
+  const [parlamentar, setParlamentar] = useState<ApiParlamentar | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [showApiModal, setShowApiModal] = useState(false);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!id) return;
-    async function loadData() {
-      setLoading(true);
-      setError('');
-      try {
-        const data = await api.getParlamentarById(id);
-        setParlamentar(data);
-      } catch (err: any) {
-        setError(err.message || 'Não foi possível carregar os dados do parlamentar.');
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    setError('');
+    try {
+      const data = await api.getParlamentarById(id);
+      setParlamentar(data);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar dados oficiais do parlamentar.');
+    } finally {
+      setLoading(false);
     }
-    loadData();
   }, [id]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleShare = async () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -65,7 +71,7 @@ export default function ParlamentarDetailPage() {
       <div className="container py-5 text-center">
         <div className="card p-5 border-0 shadow-sm max-w-lg mx-auto">
           <RefreshCw size={36} className="spinner-border spinner-border-sm mx-auto mb-3 text-primary" />
-          <p className="text-muted mb-0">Carregando perfil do parlamentar...</p>
+          <p className="text-muted mb-0">Carregando perfil e biografia oficial do parlamentar via API...</p>
         </div>
       </div>
     );
@@ -77,8 +83,8 @@ export default function ParlamentarDetailPage() {
         <div className="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-3">
           <AlertCircle size={28} className="text-warning flex-shrink-0" />
           <div>
-            <h5 className="alert-heading mb-1">Parlamentar não encontrado</h5>
-            <p className="mb-2 text-muted small">{error || 'O registro solicitado não está disponível.'}</p>
+            <h5 className="alert-heading mb-1">Parlamentar não encontrado na API</h5>
+            <p className="mb-2 text-muted small">{error || 'O registro oficial solicitado não está disponível no SAPL.'}</p>
             <Link href="/parlamentares" className="btn btn-sm btn-outline-primary">
               &larr; Voltar para lista de parlamentares
             </Link>
@@ -90,6 +96,7 @@ export default function ParlamentarDetailPage() {
 
   const nomeExibicao = parlamentar.nome_parlamentar || parlamentar.nome_completo || parlamentar.__str__ || 'Vereador';
   const cleanApiPath = `/api/parlamentares/parlamentar/${id}/`;
+  const photoSrc = normalizePhotoUrl(parlamentar.fotografia);
 
   return (
     <div className="container py-4">
@@ -108,31 +115,68 @@ export default function ParlamentarDetailPage() {
         </ol>
       </nav>
 
-      <button
-        onClick={() => router.back()}
-        className="btn btn-sm btn-link text-decoration-none text-muted p-0 mb-3 d-flex align-items-center gap-1"
-      >
-        <ArrowLeft size={16} /> Voltar
-      </button>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <button
+          onClick={() => router.back()}
+          className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-1"
+        >
+          <ArrowLeft size={16} /> Voltar à lista
+        </button>
+
+        <button
+          type="button"
+          onClick={loadData}
+          className="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1.5"
+          title="Recarregar dados oficiais da API"
+        >
+          <RefreshCw size={13} />
+          <span>Atualizar da API</span>
+        </button>
+      </div>
 
       {/* Main Card */}
       <div className="card border-0 shadow-sm mb-4 overflow-hidden">
+        {/* Banner de Topo com Foto e Identificação */}
         <div className="bg-primary text-white p-4 p-md-5">
-          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-4">
             <div className="d-flex align-items-center gap-4 flex-wrap">
+              {/* Foto Otimizada com Next/Image */}
               <div
-                className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow"
-                style={{ width: 84, height: 84, fontSize: '2rem', fontWeight: 'bold' }}
+                className="position-relative rounded-circle overflow-hidden border border-3 border-white shadow-lg bg-dark flex-shrink-0"
+                style={{ width: 110, height: 110 }}
               >
-                {nomeExibicao.slice(0, 2).toUpperCase()}
+                {photoSrc ? (
+                  <Image
+                    src={photoSrc}
+                    alt={nomeExibicao}
+                    fill
+                    sizes="110px"
+                    className="object-fit-cover"
+                    referrerPolicy="no-referrer"
+                    priority
+                  />
+                ) : (
+                  <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-10 text-white">
+                    <User size={48} className="opacity-50" />
+                  </div>
+                )}
               </div>
+
               <div>
-                <span className="badge bg-white bg-opacity-25 text-white mb-2 fs-7 px-2.5 py-1">
-                  {parlamentar.ativo ? 'Vereador em Exercício' : 'Mandato Anterior'}
-                </span>
-                <h1 className="h2 fw-bold mb-1">{nomeExibicao}</h1>
+                <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
+                  <span className={`badge ${parlamentar.ativo ? 'bg-success' : 'bg-secondary'} text-white fs-7 px-2.5 py-1`}>
+                    {parlamentar.ativo ? 'Vereador em Exercício' : 'Mandato Registrado'}
+                  </span>
+                  <span className="badge bg-white bg-opacity-25 text-white fs-7 px-2.5 py-1">
+                    Câmara Municipal &bull; ID #{parlamentar.id}
+                  </span>
+                </div>
+
+                <h1 className="h2 fw-bold mb-1 text-white">{nomeExibicao}</h1>
                 {parlamentar.nome_completo && parlamentar.nome_completo !== nomeExibicao && (
-                  <p className="text-white-50 mb-0 small">Nome civil: {parlamentar.nome_completo}</p>
+                  <p className="text-white-50 mb-0 small">
+                    Nome civil: <strong>{parlamentar.nome_completo}</strong>
+                  </p>
                 )}
               </div>
             </div>
@@ -141,7 +185,7 @@ export default function ParlamentarDetailPage() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="btn btn-light btn-sm d-flex align-items-center gap-1.5 shadow-sm"
+                className="btn btn-light btn-sm d-flex align-items-center gap-1.5 shadow-sm text-nowrap"
               >
                 {copied ? <Check size={14} className="text-success" /> : <Share2 size={14} />}
                 <span>{copied ? 'Copiado!' : 'Compartilhar'}</span>
@@ -150,7 +194,7 @@ export default function ParlamentarDetailPage() {
               <button
                 type="button"
                 onClick={() => setShowApiModal(true)}
-                className="btn btn-outline-light btn-sm d-flex align-items-center gap-1.5"
+                className="btn btn-outline-light btn-sm d-flex align-items-center gap-1.5 text-nowrap"
               >
                 <Code size={14} />
                 <span>API REST</span>
@@ -159,32 +203,70 @@ export default function ParlamentarDetailPage() {
           </div>
         </div>
 
-        <div className="card-body p-4">
+        {/* Corpo com Informações e Biografia Oficial */}
+        <div className="card-body p-4 p-md-5">
           <div className="row g-4">
-            {/* Informações de Contato e Gabinete */}
+            {/* Informações Oficiais do Mandato e Gabinete */}
             <div className="col-lg-4">
-              <div className="bg-light p-3.5 rounded-3 border">
+              <div className="bg-light p-4 rounded-3 border">
                 <h6 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                  <Building size={16} className="text-primary" /> Informações do Mandato
+                  <Building size={16} className="text-primary" /> Informações do Mandato (API)
                 </h6>
                 <dl className="row mb-0 small">
-                  <dt className="col-5 text-muted">Partido:</dt>
-                  <dd className="col-7 fw-semibold">{parlamentar.partido || 'Não informado'}</dd>
-
-                  <dt className="col-5 text-muted">Telefone:</dt>
-                  <dd className="col-7">{parlamentar.telefone || '(63) 3466-1884'}</dd>
-
-                  <dt className="col-5 text-muted">Gabinete:</dt>
-                  <dd className="col-7">{parlamentar.numero_gab_parlamentar || 'Gabinete Parlamentar'}</dd>
-
-                  <dt className="col-5 text-muted">Município:</dt>
-                  <dd className="col-7">Pedro Afonso - TO</dd>
-
                   <dt className="col-5 text-muted">ID Sistema:</dt>
                   <dd className="col-7 font-monospace">#{parlamentar.id}</dd>
+
+                  {parlamentar.profissao && (
+                    <>
+                      <dt className="col-5 text-muted">Profissão:</dt>
+                      <dd className="col-7">{parlamentar.profissao}</dd>
+                    </>
+                  )}
+
+                  {parlamentar.telefone && (
+                    <>
+                      <dt className="col-5 text-muted">Telefone:</dt>
+                      <dd className="col-7">{parlamentar.telefone}</dd>
+                    </>
+                  )}
+
+                  {parlamentar.email && (
+                    <>
+                      <dt className="col-5 text-muted">E-mail:</dt>
+                      <dd className="col-7 text-break">{parlamentar.email}</dd>
+                    </>
+                  )}
+
+                  {parlamentar.numero_gab_parlamentar && (
+                    <>
+                      <dt className="col-5 text-muted">Gabinete:</dt>
+                      <dd className="col-7">{parlamentar.numero_gab_parlamentar}</dd>
+                    </>
+                  )}
+
+                  {parlamentar.locais_atuacao && (
+                    <>
+                      <dt className="col-5 text-muted">Atuação:</dt>
+                      <dd className="col-7">{parlamentar.locais_atuacao}</dd>
+                    </>
+                  )}
+
+                  {parlamentar.endereco_web && (
+                    <>
+                      <dt className="col-5 text-muted">Site/Rede:</dt>
+                      <dd className="col-7 text-break">
+                        <a href={parlamentar.endereco_web} target="_blank" rel="noopener noreferrer" className="text-primary">
+                          {parlamentar.endereco_web}
+                        </a>
+                      </dd>
+                    </>
+                  )}
+
+                  <dt className="col-5 text-muted">Fonte:</dt>
+                  <dd className="col-7">Sistema SAPL Oficial</dd>
                 </dl>
 
-                <div className="mt-3 pt-3 border-top">
+                <div className="mt-4 pt-3 border-top">
                   <Link
                     href={`/materias?busca=${encodeURIComponent(nomeExibicao)}`}
                     className="btn btn-primary btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
@@ -195,33 +277,35 @@ export default function ParlamentarDetailPage() {
               </div>
             </div>
 
-            {/* Biografia e Atuação */}
+            {/* Biografia Oficial da API (Sem Dados Fictícios) */}
             <div className="col-lg-8">
-              <h5 className="fw-bold text-dark mb-3">Biografia & Trajetória</h5>
-              {parlamentar.biografia ? (
-                <div
-                  className="prose text-secondary lh-base"
-                  dangerouslySetInnerHTML={{ __html: parlamentar.biografia }}
-                />
-              ) : (
-                <p className="text-muted small fst-italic">
-                  Biografia parlamentar não cadastrada no sistema oficial do SAPL.
-                </p>
-              )}
+              <div className="mb-4">
+                <h4 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                  <Award className="text-primary" size={22} /> Biografia Oficial Registrada na API
+                </h4>
+                {parlamentar.biografia ? (
+                  <div
+                    className="prose text-secondary lh-lg fs-6"
+                    dangerouslySetInnerHTML={{ __html: parlamentar.biografia }}
+                  />
+                ) : (
+                  <div className="alert alert-light border p-4 text-muted small">
+                    <p className="mb-0">
+                      Nenhum texto biográfico foi registrado para este parlamentar no cadastro oficial do SAPL. Os dados apresentados refletem com precisão as informações fornecidas pela Casa Legislativa.
+                    </p>
+                  </div>
+                )}
+              </div>
 
-              {/* Ações Rápidas */}
-              <div className="mt-4 pt-4 border-top d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                <div className="small text-muted">
-                  Fonte: Portal de Dados Abertos da Câmara Municipal de Pedro Afonso
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowApiModal(true)}
-                  className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1.5"
-                >
-                  <Code size={14} /> <span>Integrar via API: <code>{cleanApiPath}</code></span>
-                </button>
+              {/* Informação do Portal e Transparência */}
+              <div className="mt-4 pt-3 border-top text-muted small d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <span className="d-flex align-items-center gap-1.5">
+                  <ShieldCheck size={16} className="text-success" />
+                  <span>Conteúdo oficial sincronizado em tempo real da API pública</span>
+                </span>
+                <Link href="/parlamentares" className="text-primary text-decoration-none fw-semibold">
+                  &larr; Ver todos os vereadores
+                </Link>
               </div>
             </div>
           </div>
@@ -232,7 +316,7 @@ export default function ParlamentarDetailPage() {
       <ApiIntegrationModal
         isOpen={showApiModal}
         onClose={() => setShowApiModal(false)}
-        title={`Vereador: ${nomeExibicao}`}
+        title={`Vereador Oficial: ${nomeExibicao}`}
         cleanPath={cleanApiPath}
         category="Parlamentares"
         defaultData={parlamentar}

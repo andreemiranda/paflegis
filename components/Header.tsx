@@ -20,6 +20,8 @@ import {
   FileSpreadsheet,
   FolderKanban,
   Users,
+  Home,
+  Award,
 } from 'lucide-react';
 import { ALL_38_DOCUMENT_TYPES, getDocumentTypesByCategory } from '@/lib/sapl/documentTypes';
 
@@ -107,12 +109,12 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/"
-                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname === '/' ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
-                  <Landmark size={15} />
-                  <span>Início</span>
+                  <Home size={15} />
+                  <span className="text-nowrap">Início</span>
                 </Link>
               </li>
 
@@ -120,12 +122,12 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/materias"
-                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname.startsWith('/materias') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
                   <FileText size={15} />
-                  <span>Matérias</span>
+                  <span className="text-nowrap">Matérias</span>
                 </Link>
               </li>
 
@@ -133,12 +135,12 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/normas"
-                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname.startsWith('/normas') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
                   <BookOpen size={15} />
-                  <span>Normas</span>
+                  <span className="text-nowrap">Normas</span>
                 </Link>
               </li>
 
@@ -146,12 +148,12 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/sessoes"
-                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname.startsWith('/sessoes') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
                   <Video size={15} />
-                  <span>Sessões</span>
+                  <span className="text-nowrap">Sessões</span>
                 </Link>
               </li>
 
@@ -159,12 +161,26 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/parlamentares"
-                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname.startsWith('/parlamentares') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
                   <Users size={15} />
-                  <span>Vereadores</span>
+                  <span className="text-nowrap">Vereadores</span>
+                </Link>
+              </li>
+
+              {/* 5b. Mesa Diretora */}
+              <li className="nav-item">
+                <Link
+                  href="/mesa-diretora"
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
+                    pathname.startsWith('/mesa-diretora') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
+                  }`}
+                  title="Mesa Diretora da Câmara Municipal"
+                >
+                  <Award size={15} />
+                  <span className="text-nowrap">Mesa Diretora</span>
                 </Link>
               </li>
 
@@ -172,32 +188,32 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/comissoes"
-                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname.startsWith('/comissoes') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
                   <FolderKanban size={15} />
-                  <span>Comissões</span>
+                  <span className="text-nowrap">Comissões</span>
                 </Link>
               </li>
 
-              {/* 7. Central de Documentos & Acervo Legislativo */}
+              {/* Transparência - Menu Suspenso */}
               <li className="nav-item">
                 <button
                   type="button"
                   onClick={toggleMenu}
-                  className={`nav-link btn btn-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-semibold text-decoration-none border-0 ${
+                  className={`nav-link btn btn-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-semibold text-decoration-none border-0 text-nowrap ${
                     showMegaMenu || isDocActive
                       ? 'bg-primary bg-opacity-10 text-primary'
                       : 'text-dark'
                   }`}
                   aria-expanded={showMegaMenu}
                   aria-haspopup="true"
-                  title="Central de Documentos & Acervo Legislativo Completo da Câmara Municipal"
+                  title="Central de Transparência e Documentos da Câmara Municipal"
                   style={{ cursor: 'pointer' }}
                 >
-                  <FileText size={15} className="text-primary" />
-                  <span>Documentos</span>
+                  <Layers size={15} className="text-primary" />
+                  <span className="text-nowrap">Transparência</span>
                   <ChevronDown
                     size={13}
                     style={{
@@ -213,51 +229,51 @@ export default function Header() {
               <li className="nav-item">
                 <Link
                   href="/busca"
-                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1 fw-medium text-nowrap ${
                     pathname.startsWith('/busca') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                   title="Busca global em matérias, leis e sessões"
                 >
                   <Search size={15} />
-                  <span>Busca</span>
+                  <span className="text-nowrap">Busca</span>
                 </Link>
               </li>
 
-              {/* 6. Contato */}
+              {/* 9. Contato */}
               <li className="nav-item">
                 <Link
                   href="/contato"
-                  className={`nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname.startsWith('/contato') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
-                  <Mail size={16} />
-                  <span>Contato</span>
+                  <Mail size={15} />
+                  <span className="text-nowrap">Contato</span>
                 </Link>
               </li>
 
-              {/* 7. Sobre */}
+              {/* 10. Sobre */}
               <li className="nav-item">
                 <Link
                   href="/sobre"
-                  className={`nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2 fw-medium ${
+                  className={`nav-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-medium text-nowrap ${
                     pathname.startsWith('/sobre') ? 'active bg-primary bg-opacity-10 text-primary' : 'text-dark'
                   }`}
                 >
-                  <Info size={16} />
-                  <span>Sobre</span>
+                  <Info size={15} />
+                  <span className="text-nowrap">Sobre</span>
                 </Link>
               </li>
             </ul>
 
-            <div className="d-flex ms-lg-2 mt-2 mt-lg-0 align-items-center">
+            <div className="d-flex ms-lg-2 mt-2 mt-lg-0 align-items-center flex-shrink-0">
               <Link
                 href="/api-docs"
-                className="btn btn-sm btn-primary d-flex align-items-center gap-1.5 px-3 py-1.5 shadow-sm fw-medium"
+                className="btn btn-sm btn-primary d-flex align-items-center gap-1.5 px-3 py-1.5 shadow-sm fw-medium text-nowrap"
                 title="Console de Integração e Documentação da API REST"
               >
                 <Code size={14} />
-                <span>API & Integração</span>
+                <span className="text-nowrap">API & Integração</span>
               </Link>
             </div>
           </div>
@@ -282,37 +298,12 @@ export default function Header() {
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom">
               <div>
                 <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                  <FileText size={18} className="text-primary" />
-                  Acervo Geral de Documentos & Proposições
+                  <Layers size={18} className="text-primary" />
+                  Central de Visualização & Dados da Câmara Municipal
                 </h6>
                 <small className="text-muted">
-                  Acesse todos os documentos, projetos, normas e atos com sincronização constante da API.
+                  Acesse documentos, matérias, leis, sessões e todas as entidades oficiais do SAPL.
                 </small>
-              </div>
-
-              <div className="d-flex flex-wrap align-items-center gap-1.5 ms-auto">
-                <Link
-                  href="/documentos"
-                  onClick={() => setShowMegaMenu(false)}
-                  className="btn btn-sm btn-primary fw-semibold d-flex align-items-center gap-1"
-                >
-                  <FileText size={13} />
-                  <span>Ver Todo o Acervo</span>
-                </Link>
-                <Link
-                  href="/materias"
-                  onClick={() => setShowMegaMenu(false)}
-                  className="btn btn-sm btn-outline-primary fw-medium"
-                >
-                  Matérias
-                </Link>
-                <Link
-                  href="/normas"
-                  onClick={() => setShowMegaMenu(false)}
-                  className="btn btn-sm btn-outline-success fw-medium"
-                >
-                  Normas
-                </Link>
               </div>
 
               <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: 320 }}>
@@ -417,26 +408,17 @@ export default function Header() {
               </div>
             )}
 
-            <div className="mt-3 pt-2 border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div className="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
               <span className="small text-muted">
-                Acervo integrado em tempo real com a API do SAPL da Câmara Municipal de Pedro Afonso - TO.
+                Central unificada de documentos e entidades da API SAPL com busca e paginação dedicada.
               </span>
-              <div className="d-flex align-items-center gap-3">
-                <Link
-                  href="/api-docs"
-                  onClick={() => setShowMegaMenu(false)}
-                  className="btn btn-sm btn-link text-muted text-decoration-none"
-                >
-                  Documentação da API &rarr;
-                </Link>
-                <Link
-                  href="/documentos"
-                  onClick={() => setShowMegaMenu(false)}
-                  className="btn btn-sm btn-primary fw-semibold px-3"
-                >
-                  Abrir Central de Documentos &rarr;
-                </Link>
-              </div>
+              <Link
+                href="/documentos"
+                onClick={() => setShowMegaMenu(false)}
+                className="btn btn-sm btn-link text-primary fw-semibold text-decoration-none"
+              >
+                Acessar Central de Dados Completa &rarr;
+              </Link>
             </div>
           </div>
         </div>

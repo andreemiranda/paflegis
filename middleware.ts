@@ -46,10 +46,13 @@ export function middleware(req: NextRequest) {
       return corsRes;
     }
 
-    // Exceção pontual: POST /api/v1/contato (formulário de ouvidoria/contato do cidadão protegido por rate-limit e honeypot)
+    // Exceções públicas:
+    // 1. POST /api/v1/contato (formulário de ouvidoria/contato do cidadão protegido por rate-limit e honeypot)
+    // 2. GET /api/media/* (arquivos de fotos oficiais de vereadores e documentos legislativos públicos em streaming)
     const isContactPost = req.method === 'POST' && req.nextUrl.pathname === '/api/v1/contato';
+    const isMediaGet = (req.method === 'GET' || req.method === 'HEAD') && req.nextUrl.pathname.startsWith('/api/media/');
 
-    if (!isContactPost) {
+    if (!isContactPost && !isMediaGet) {
       // Valida obrigatoriedade da API Key (aceita via ?API_KEYS=<chave>, x-api-key ou Authorization: Bearer)
       const auth = validateApiRequest(req);
       if (!auth.authorized) {

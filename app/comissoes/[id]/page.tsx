@@ -202,14 +202,6 @@ export default function ComissaoDetailPage() {
                 <span className="small text-muted">
                   Câmara Municipal de Pedro Afonso · Portal Cívico de Dados Abertos
                 </span>
-
-                <button
-                  type="button"
-                  onClick={() => setShowApiModal(true)}
-                  className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1.5"
-                >
-                  <Code size={14} /> <span>Integrar via API: <code>{cleanApiPath}</code></span>
-                </button>
               </div>
             </div>
           </div>

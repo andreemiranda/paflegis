@@ -87,10 +87,10 @@ function DocumentTypeView({ paramsPromise }: { paramsPromise: Promise<{ slug: st
           <AlertCircle size={48} className="text-warning mx-auto mb-3" />
           <h2 className="h4 fw-bold text-dark mb-2">Tipo de Documento Não Encontrado</h2>
           <p className="text-muted small mb-4">
-            O tipo de documento solicitado não consta no catálogo oficial da API do SAPL.
+            O tipo de documento solicitado não foi localizado na Central de Dados do SAPL.
           </p>
           <Link href="/documentos" className="btn btn-primary">
-            Ver Central de Documentos & Acervo
+            Acessar Central de Dados & Documentos
           </Link>
         </div>
       </div>
@@ -118,7 +118,7 @@ function DocumentTypeView({ paramsPromise }: { paramsPromise: Promise<{ slug: st
       <nav aria-label="breadcrumb" className="mb-3">
         <ol className="breadcrumb small mb-0">
           <li className="breadcrumb-item"><Link href="/" className="text-decoration-none">Início</Link></li>
-          <li className="breadcrumb-item"><Link href="/documentos" className="text-decoration-none">Documentos & Acervo</Link></li>
+          <li className="breadcrumb-item"><Link href="/documentos" className="text-decoration-none">Central de Dados</Link></li>
           <li className="breadcrumb-item active" aria-current="page">{docType.nome}</li>
         </ol>
       </nav>

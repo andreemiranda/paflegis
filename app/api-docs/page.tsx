@@ -92,12 +92,13 @@ export default function ApiDocsPage() {
   const getSnippets = (path: string, param: string) => {
     const fullPath = param ? `${path}${param}` : path;
     const url = `${origin}${fullPath}`;
-    const urlWithQuery = `${url}${fullPath.includes('?') ? '&' : '?'}API_KEYS=${apiKey}`;
+    const displayKey = 'SUA_CHAVE_API';
+    const urlWithQuery = `${url}${fullPath.includes('?') ? '&' : '?'}API_KEYS=${displayKey}`;
 
     const curl =
       authMode === 'query'
         ? `curl -X GET "${urlWithQuery}"`
-        : `curl -X GET "${url}" \\\n  -H "x-api-key: ${apiKey}" \\\n  -H "Accept: application/json"`;
+        : `curl -X GET "${url}" \\\n  -H "x-api-key: ${displayKey}" \\\n  -H "Accept: application/json"`;
 
     const js =
       authMode === 'query'
@@ -108,7 +109,7 @@ console.log(data);`
         : `// Consulta via Cabeçalho x-api-key
 const res = await fetch("${url}", {
   headers: {
-    "x-api-key": "${apiKey}",
+    "x-api-key": "${displayKey}",
     "Accept": "application/json"
   }
 });
@@ -124,7 +125,7 @@ data = res.json()
 print(data)`
         : `# Consulta via Cabeçalho
 import requests
-headers = {"x-api-key": "${apiKey}", "Accept": "application/json"}
+headers = {"x-api-key": "${displayKey}", "Accept": "application/json"}
 res = requests.get("${url}", headers=headers)
 data = res.json()
 print(data)`;

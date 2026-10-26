@@ -35,12 +35,16 @@ const nextConfig = {
   skipTrailingSlashRedirect: true,
   allowedDevOrigins: Array.from(new Set(devOrigins)),
   images: {
-    remotePatterns: uniqueHostnames.map((host) => ({
-      protocol: 'https',
-      hostname: host,
-      port: '',
-      pathname: '/**',
-    })),
+    remotePatterns: [
+      ...uniqueHostnames.map((host) => ({
+        protocol: 'https',
+        hostname: host,
+        port: '',
+        pathname: '/**',
+      })),
+      { protocol: 'https', hostname: 'paflegis.vercel.app', pathname: '/**' },
+      { protocol: 'https', hostname: 'camarapedroafonso.to.gov.br', pathname: '/**' },
+    ],
   },
   async headers() {
     return [

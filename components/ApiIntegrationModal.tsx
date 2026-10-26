@@ -45,23 +45,25 @@ export default function ApiIntegrationModal({
   const apiKey = getStoredApiKey();
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://paflegis.vercel.app';
   const fullCleanUrl = `${origin}${cleanPath}`;
+  const placeholderKey = 'SUA_CHAVE_API';
+  const displayQueryUrl = `${fullCleanUrl}${cleanPath.includes('?') ? '&' : '?'}API_KEYS=${placeholderKey}`;
   const fullQueryUrl = `${fullCleanUrl}${cleanPath.includes('?') ? '&' : '?'}API_KEYS=${apiKey}`;
 
   const curlCommand =
     authMethod === 'query'
-      ? `curl -X GET "${fullQueryUrl}"`
-      : `curl -X GET "${fullCleanUrl}" \\\n  -H "x-api-key: ${apiKey}" \\\n  -H "Accept: application/json"`;
+      ? `curl -X GET "${displayQueryUrl}"`
+      : `curl -X GET "${fullCleanUrl}" \\\n  -H "x-api-key: ${placeholderKey}" \\\n  -H "Accept: application/json"`;
 
   const jsCode =
     authMethod === 'query'
       ? `// Consulta via Query String ?API_KEYS=
-const response = await fetch("${fullQueryUrl}");
+const response = await fetch("${displayQueryUrl}");
 const data = await response.json();
 console.log(data);`
       : `// Consulta via Cabeçalho x-api-key
 const response = await fetch("${fullCleanUrl}", {
   headers: {
-    "x-api-key": "${apiKey}",
+    "x-api-key": "${placeholderKey}",
     "Accept": "application/json"
   }
 });
@@ -73,7 +75,7 @@ console.log(data);`;
       ? `# Consulta via Query String
 import requests
 
-url = "${fullQueryUrl}"
+url = "${displayQueryUrl}"
 response = requests.get(url)
 data = response.json()
 print(data)`
@@ -82,7 +84,7 @@ import requests
 
 url = "${fullCleanUrl}"
 headers = {
-    "x-api-key": "${apiKey}",
+    "x-api-key": "${placeholderKey}",
     "Accept": "application/json"
 }
 response = requests.get(url, headers=headers)

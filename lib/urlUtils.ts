@@ -104,6 +104,31 @@ export function normalizeDocumentUrl(rawUrl: string | null | undefined): string 
   return `${baseDomain}/${cleaned}`;
 }
 
+/**
+ * Converte a URL da fotografia oficial retornada pela API SAPL para o endpoint
+ * de streaming relativo (/api/media/...) permitindo otimização nativa via Next.js <Image> (/_next/image?url=...).
+ */
+export function normalizePhotoUrl(rawUrl?: string | null): string {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.startsWith('/api/media/')) return trimmed;
+  if (trimmed.startsWith('/media/')) return `/api/media/${trimmed.slice(7)}`;
+
+  try {
+    const u = new URL(trimmed);
+    if (u.pathname.startsWith('/api/media/')) {
+      return u.pathname;
+    }
+    if (u.pathname.startsWith('/media/')) {
+      return `/api/media/${u.pathname.slice(7)}`;
+    }
+  } catch {}
+
+  return trimmed;
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) return false;
   try {
