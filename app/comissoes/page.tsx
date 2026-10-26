@@ -53,8 +53,28 @@ export default function ComissoesPage() {
             Acompanhe a atuação, composição e pareceres das comissões permanentes e temporárias da Câmara.
           </p>
         </div>
-        <div className="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 border border-primary border-opacity-25">
-          {total} comissões registradas
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              api.getComissoes({ page, search: busca || undefined })
+                .then((res) => {
+                  setItems(res.results || []);
+                  setTotal(res.count || (res.results ? res.results.length : 0));
+                })
+                .catch(() => {})
+                .finally(() => setLoading(false));
+            }}
+            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5"
+            title="Atualizar dados da API"
+          >
+            <RefreshCw size={14} className={loading ? 'spinner-border spinner-border-sm' : ''} />
+            <span>Atualizar</span>
+          </button>
+          <div className="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 border border-primary border-opacity-25">
+            {total} comissões registradas
+          </div>
         </div>
       </div>
 

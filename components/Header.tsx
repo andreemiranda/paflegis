@@ -181,23 +181,23 @@ export default function Header() {
                 </Link>
               </li>
 
-              {/* 7. Todos (38) - Menu Suspenso */}
+              {/* 7. Central de Documentos & Acervo Legislativo */}
               <li className="nav-item">
                 <button
                   type="button"
                   onClick={toggleMenu}
-                  className={`nav-link btn btn-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1 fw-semibold text-decoration-none border-0 ${
+                  className={`nav-link btn btn-link px-2.5 py-2 rounded-2 d-flex align-items-center gap-1.5 fw-semibold text-decoration-none border-0 ${
                     showMegaMenu || isDocActive
                       ? 'bg-primary bg-opacity-10 text-primary'
                       : 'text-dark'
                   }`}
                   aria-expanded={showMegaMenu}
                   aria-haspopup="true"
-                  title="Consultar os 38 tipos de documentos da Câmara Municipal"
+                  title="Central de Documentos & Acervo Legislativo Completo da Câmara Municipal"
                   style={{ cursor: 'pointer' }}
                 >
-                  <Layers size={15} className="text-primary" />
-                  <span>38 Tipos</span>
+                  <FileText size={15} className="text-primary" />
+                  <span>Documentos</span>
                   <ChevronDown
                     size={13}
                     style={{
@@ -282,12 +282,37 @@ export default function Header() {
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom">
               <div>
                 <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                  <Layers size={18} className="text-primary" />
-                  Todos os 38 Tipos de Documentos (SAPL Pedro Afonso)
+                  <FileText size={18} className="text-primary" />
+                  Acervo Geral de Documentos & Proposições
                 </h6>
                 <small className="text-muted">
-                  Acesse páginas exclusivas de cada documento da Câmara Municipal.
+                  Acesse todos os documentos, projetos, normas e atos com sincronização constante da API.
                 </small>
+              </div>
+
+              <div className="d-flex flex-wrap align-items-center gap-1.5 ms-auto">
+                <Link
+                  href="/documentos"
+                  onClick={() => setShowMegaMenu(false)}
+                  className="btn btn-sm btn-primary fw-semibold d-flex align-items-center gap-1"
+                >
+                  <FileText size={13} />
+                  <span>Ver Todo o Acervo</span>
+                </Link>
+                <Link
+                  href="/materias"
+                  onClick={() => setShowMegaMenu(false)}
+                  className="btn btn-sm btn-outline-primary fw-medium"
+                >
+                  Matérias
+                </Link>
+                <Link
+                  href="/normas"
+                  onClick={() => setShowMegaMenu(false)}
+                  className="btn btn-sm btn-outline-success fw-medium"
+                >
+                  Normas
+                </Link>
               </div>
 
               <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: 320 }}>
@@ -392,17 +417,26 @@ export default function Header() {
               </div>
             )}
 
-            <div className="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
+            <div className="mt-3 pt-2 border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
               <span className="small text-muted">
-                38 espécies catalogadas da API SAPL com busca e paginação dedicada.
+                Acervo integrado em tempo real com a API do SAPL da Câmara Municipal de Pedro Afonso - TO.
               </span>
-              <Link
-                href="/documentos"
-                onClick={() => setShowMegaMenu(false)}
-                className="btn btn-sm btn-link text-primary fw-semibold text-decoration-none"
-              >
-                Ver Catálogo Completo &rarr;
-              </Link>
+              <div className="d-flex align-items-center gap-3">
+                <Link
+                  href="/api-docs"
+                  onClick={() => setShowMegaMenu(false)}
+                  className="btn btn-sm btn-link text-muted text-decoration-none"
+                >
+                  Documentação da API &rarr;
+                </Link>
+                <Link
+                  href="/documentos"
+                  onClick={() => setShowMegaMenu(false)}
+                  className="btn btn-sm btn-primary fw-semibold px-3"
+                >
+                  Abrir Central de Documentos &rarr;
+                </Link>
+              </div>
             </div>
           </div>
         </div>

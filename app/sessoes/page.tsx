@@ -25,28 +25,29 @@ function SessoesContent() {
   const [previewDoc, setPreviewDoc] = useState<{ url: string; title: string } | null>(null);
   const [videoModal, setVideoModal] = useState<{ url: string; title: string } | null>(null);
 
-  useEffect(() => {
-    async function loadSessoes() {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await api.getSessoes({
-          busca: busca.trim() || undefined,
-          ano: ano || undefined,
-          pagina: page,
-          limite: 10,
-        });
-        setItems(res.items || []);
-        setTotal(res.total || 0);
-        setTotalPages(res.totalPages || 1);
-      } catch (err: any) {
-        setError(err.message || 'Erro ao carregar sessões plenárias.');
-      } finally {
-        setLoading(false);
-      }
+  const loadSessoes = React.useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.getSessoes({
+        busca: busca.trim() || undefined,
+        ano: ano || undefined,
+        pagina: page,
+        limite: 10,
+      });
+      setItems(res.items || []);
+      setTotal(res.total || 0);
+      setTotalPages(res.totalPages || 1);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar sessões plenárias.');
+    } finally {
+      setLoading(false);
     }
-    loadSessoes();
   }, [busca, ano, page]);
+
+  useEffect(() => {
+    loadSessoes();
+  }, [loadSessoes]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,8 +80,19 @@ function SessoesContent() {
             Acompanhe pautas, atas e gravações das sessões ordinárias, extraordinárias e solenes da Câmara de Pedro Afonso.
           </p>
         </div>
-        <div className="badge bg-danger bg-opacity-10 text-danger fs-6 px-3 py-2 border border-danger border-opacity-25">
-          {total} {total === 1 ? 'sessão encontrada' : 'sessões encontradas'}
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            onClick={() => loadSessoes()}
+            className="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1.5"
+            title="Atualizar dados da API"
+          >
+            <RefreshCw size={14} className={loading ? 'spinner-border spinner-border-sm' : ''} />
+            <span>Atualizar</span>
+          </button>
+          <div className="badge bg-danger bg-opacity-10 text-danger fs-6 px-3 py-2 border border-danger border-opacity-25">
+            {total} {total === 1 ? 'sessão encontrada' : 'sessões encontradas'}
+          </div>
         </div>
       </div>
 

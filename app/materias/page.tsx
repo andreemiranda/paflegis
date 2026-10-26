@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FileText, Search, Filter, RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/sapl/client';
@@ -30,30 +30,31 @@ function MateriasContent() {
     api.getTiposMaterias().then(setTipos).catch(() => {});
   }, []);
 
+  const loadMaterias = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.getMaterias({
+        busca: busca.trim() || undefined,
+        tipo: tipo || undefined,
+        ano: ano || undefined,
+        pagina: page,
+        limite: 10,
+      });
+      setItems(res.items || []);
+      setTotal(res.total || 0);
+      setTotalPages(res.totalPages || 1);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar matérias legislativas.');
+    } finally {
+      setLoading(false);
+    }
+  }, [busca, tipo, ano, page]);
+
   // Fetch materias on filter/page change
   useEffect(() => {
-    async function loadMaterias() {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await api.getMaterias({
-          busca: busca.trim() || undefined,
-          tipo: tipo || undefined,
-          ano: ano || undefined,
-          pagina: page,
-          limite: 10,
-        });
-        setItems(res.items || []);
-        setTotal(res.total || 0);
-        setTotalPages(res.totalPages || 1);
-      } catch (err: any) {
-        setError(err.message || 'Erro ao carregar matérias legislativas.');
-      } finally {
-        setLoading(false);
-      }
-    }
     loadMaterias();
-  }, [busca, tipo, ano, page]);
+  }, [loadMaterias]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,8 +88,19 @@ function MateriasContent() {
             Consulte projetos de lei, indicações, moções e requerimentos em tramitação na Câmara de Pedro Afonso.
           </p>
         </div>
-        <div className="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 border border-primary border-opacity-25">
-          {total} {total === 1 ? 'matéria encontrada' : 'matérias encontradas'}
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            onClick={() => loadMaterias()}
+            className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1.5"
+            title="Atualizar dados da API"
+          >
+            <RefreshCw size={14} className={loading ? 'spinner-border spinner-border-sm' : ''} />
+            <span>Atualizar</span>
+          </button>
+          <div className="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 border border-primary border-opacity-25">
+            {total} {total === 1 ? 'matéria encontrada' : 'matérias encontradas'}
+          </div>
         </div>
       </div>
 

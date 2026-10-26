@@ -28,29 +28,30 @@ function NormasContent() {
     api.getTiposNormas().then(setTipos).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    async function loadNormas() {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await api.getNormas({
-          busca: busca.trim() || undefined,
-          tipo: tipo || undefined,
-          ano: ano || undefined,
-          pagina: page,
-          limite: 10,
-        });
-        setItems(res.items || []);
-        setTotal(res.total || 0);
-        setTotalPages(res.totalPages || 1);
-      } catch (err: any) {
-        setError(err.message || 'Erro ao carregar normas jurídicas.');
-      } finally {
-        setLoading(false);
-      }
+  const loadNormas = React.useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.getNormas({
+        busca: busca.trim() || undefined,
+        tipo: tipo || undefined,
+        ano: ano || undefined,
+        pagina: page,
+        limite: 10,
+      });
+      setItems(res.items || []);
+      setTotal(res.total || 0);
+      setTotalPages(res.totalPages || 1);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao carregar normas jurídicas.');
+    } finally {
+      setLoading(false);
     }
-    loadNormas();
   }, [busca, tipo, ano, page]);
+
+  useEffect(() => {
+    loadNormas();
+  }, [loadNormas]);
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +85,19 @@ function NormasContent() {
             Consulte leis ordinárias, leis complementares, decretos e resoluções promulgadas em Pedro Afonso - TO.
           </p>
         </div>
-        <div className="badge bg-success bg-opacity-10 text-success fs-6 px-3 py-2 border border-success border-opacity-25">
-          {total} {total === 1 ? 'norma encontrada' : 'normas encontradas'}
+        <div className="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            onClick={() => loadNormas()}
+            className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1.5"
+            title="Atualizar dados da API"
+          >
+            <RefreshCw size={14} className={loading ? 'spinner-border spinner-border-sm' : ''} />
+            <span>Atualizar</span>
+          </button>
+          <div className="badge bg-success bg-opacity-10 text-success fs-6 px-3 py-2 border border-success border-opacity-25">
+            {total} {total === 1 ? 'norma encontrada' : 'normas encontradas'}
+          </div>
         </div>
       </div>
 

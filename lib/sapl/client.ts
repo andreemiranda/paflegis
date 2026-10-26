@@ -295,5 +295,120 @@ export const api = {
   getSyncStatus: (): Promise<any> => {
     return paflegisFetch('/api/v1/sync/status');
   },
+
+  triggerSync: async (type: 'incremental' | 'full' = 'incremental'): Promise<any> => {
+    return paflegisFetch('/api/v1/sync', {
+      method: 'POST',
+      body: JSON.stringify({ type }),
+    });
+  },
+
+  getDocumentosAdministrativos: async (params?: { page?: number; search?: string }): Promise<any> => {
+    const q = new URLSearchParams();
+    if (params?.page) q.set('page', String(params.page));
+    if (params?.search) q.set('search', params.search);
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    try {
+      return await paflegisFetch(`/api/protocoloadm/documentoadministrativo/${qs}`);
+    } catch {
+      return { count: 0, results: [] };
+    }
+  },
+
+  getAllDocumentos: async (params?: QueryFilters & { categoria?: string }): Promise<{
+    items: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    fonte: string;
+  }> => {
+    const limit = params?.limite || 10;
+    const page = params?.pagina || 1;
+    const categoria = params?.categoria || 'todos';
+
+    // Se selecionou apenas normas
+    if (categoria === 'normas') {
+      const res = await api.getNormas(params);
+      return {
+        items: res.items.map((n) => ({
+          ...n,
+          origem_tipo: 'norma',
+          categoria_label: 'Norma Jurídica',
+        })),
+        total: res.total,
+        page: res.page,
+        limit: res.limit,
+        totalPages: res.totalPages,
+        fonte: res.fonte || 'api-nativa',
+      };
+    }
+
+    // Se selecionou apenas matérias
+    if (categoria === 'materias') {
+      const res = await api.getMaterias(params);
+      return {
+        items: res.items.map((m) => ({
+          ...m,
+          origem_tipo: 'materia',
+          categoria_label: 'Matéria Legislativa',
+        })),
+        total: res.total,
+        page: res.page,
+        limit: res.limit,
+        totalPages: res.totalPages,
+        fonte: res.fonte || 'api-nativa',
+      };
+    }
+
+    // Se selecionou todos: busca concorrente e unificada de matérias e normas
+    try {
+      const [matRes, normRes] = await Promise.allSettled([
+        api.getMaterias({ ...params, limite: limit }),
+        api.getNormas({ ...params, limite: limit }),
+      ]);
+
+      const matItems = matRes.status === 'fulfilled' ? matRes.value.items : [];
+      const normItems = normRes.status === 'fulfilled' ? normRes.value.items : [];
+
+      const combined = [
+        ...matItems.map((m) => ({ ...m, origem_tipo: 'materia', categoria_label: 'Matéria Legislativa' })),
+        ...normItems.map((n) => ({ ...n, origem_tipo: 'norma', categoria_label: 'Norma Jurídica' })),
+      ];
+
+      // Ordenar por ano decrescente e id decrescente
+      combined.sort((a, b) => {
+        const anoA = Number(a.ano) || 0;
+        const anoB = Number(b.ano) || 0;
+        if (anoB !== anoA) return anoB - anoA;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      });
+
+      const totalMat = matRes.status === 'fulfilled' ? matRes.value.total : 0;
+      const totalNorm = normRes.status === 'fulfilled' ? normRes.value.total : 0;
+      const total = totalMat + totalNorm;
+
+      return {
+        items: combined.slice(0, limit),
+        total: total || combined.length,
+        page,
+        limit,
+        totalPages: Math.ceil((total || combined.length) / limit) || 1,
+        fonte: 'api-nativa-unificada',
+      };
+    } catch {
+      // Fallback seguro caso falhe
+      const mat = await api.getMaterias(params).catch(() => ({ items: [], total: 0, page: 1, limit: 10, totalPages: 1 }));
+      return {
+        items: mat.items.map((m) => ({ ...m, origem_tipo: 'materia', categoria_label: 'Matéria Legislativa' })),
+        total: mat.total,
+        page: mat.page,
+        limit: mat.limit,
+        totalPages: mat.totalPages,
+        fonte: 'fallback',
+      };
+    }
+  },
 };
+
 
