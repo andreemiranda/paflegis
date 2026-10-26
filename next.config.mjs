@@ -12,11 +12,28 @@ const saplHostname = (() => {
 
 const uniqueHostnames = Array.from(new Set(['sapl.pedroafonso.to.leg.br', saplHostname]));
 
+const devOrigins = [
+  '*.run.app',
+  'localhost:3000',
+  '127.0.0.1:3000',
+  'ais-dev-jlnw7qnpwyszwi37kezans-124157476255.us-west1.run.app',
+  'ais-pre-jlnw7qnpwyszwi37kezans-124157476255.us-west1.run.app',
+];
+if (process.env.APP_PUBLIC_URL) {
+  try {
+    devOrigins.push(new URL(process.env.APP_PUBLIC_URL).host);
+  } catch {}
+}
+if (process.env.VERCEL_URL) {
+  devOrigins.push(process.env.VERCEL_URL);
+}
+
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
   skipTrailingSlashRedirect: true,
+  allowedDevOrigins: Array.from(new Set(devOrigins)),
   images: {
     remotePatterns: uniqueHostnames.map((host) => ({
       protocol: 'https',

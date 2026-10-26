@@ -230,18 +230,13 @@ export function updateDiscoveredConfig(partial: {
 
 /**
  * Resolve o domínio público em tempo de execução para requisições recebidas.
+ * Prioriza os cabeçalhos reais da requisição recebida (Host / x-forwarded-host / x-forwarded-proto)
+ * para se auto-adaptar perfeitamente ao domínio onde a aplicação estiver rodando
+ * (seja no Cloud Run/AI Studio, Vercel, domínio personalizado da Câmara ou localhost).
  */
 export function resolveRequestOrigin(reqHeaders?: Headers | Record<string, string | string[] | undefined>): string {
-  const config = getConfig();
-  if (config.appPublicUrl) {
-    return config.appPublicUrl;
-  }
-
-  if (!reqHeaders) {
-    return 'http://localhost:3000';
-  }
-
   const getHeader = (name: string): string | undefined => {
+    if (!reqHeaders) return undefined;
     if (typeof (reqHeaders as Headers).get === 'function') {
       return (reqHeaders as Headers).get(name) || undefined;
     }
@@ -250,11 +245,22 @@ export function resolveRequestOrigin(reqHeaders?: Headers | Record<string, strin
     return val;
   };
 
-  const proto = getHeader('x-forwarded-proto') || 'http';
+  const proto = getHeader('x-forwarded-proto') || 'https';
   const host = getHeader('x-forwarded-host') || getHeader('host');
 
   if (host) {
-    return `${proto}://${host}`;
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
+    const config = getConfig();
+    if (isLocalhost && config.appPublicUrl && !config.appPublicUrl.includes('localhost')) {
+      return config.appPublicUrl.replace(/\/+$/, '');
+    }
+    const effectiveProto = isLocalhost ? 'http' : (proto.startsWith('http') ? proto : 'https');
+    return `${effectiveProto}://${host}`.replace(/\/+$/, '');
+  }
+
+  const config = getConfig();
+  if (config.appPublicUrl) {
+    return config.appPublicUrl.replace(/\/+$/, '');
   }
 
   return 'http://localhost:3000';

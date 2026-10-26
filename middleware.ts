@@ -97,11 +97,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
+     * - _next (static files, image optimization, development chunks, HMR)
      * - favicon.ico (favicon file)
      * - public assets
      */
-    '/((?!_next/static|_next/image|favicon.ico|images/|assets/).*)',
+    '/((?!_next|favicon.ico|images/|assets/).*)',
   ],
 };
